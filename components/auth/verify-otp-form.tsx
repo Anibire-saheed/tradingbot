@@ -10,7 +10,8 @@ import {
   useTransition,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 import { verifyOtp, resendOtp } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 
@@ -18,8 +19,6 @@ export function VerifyOtpForm() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
   const typeParam = searchParams.get("type") || "signup";
-  const serverError = searchParams.get("error");
-  const serverMessage = searchParams.get("message");
 
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
@@ -95,11 +94,13 @@ export function VerifyOtpForm() {
 
     if (!emailParam.trim()) {
       setClientError("Account email not found. Please log in or sign up again.");
+      toast.error("Account email not found. Please log in or sign up again.");
       return;
     }
 
     if (token.length < 6) {
       setClientError("Please enter all 6 digits of the code.");
+      toast.error("Please enter all 6 digits of the code.");
       return;
     }
 
@@ -117,6 +118,7 @@ export function VerifyOtpForm() {
   function handleResend() {
     if (!emailParam.trim()) {
       setClientError("Account email not found. Please log in or sign up again.");
+      toast.error("Account email not found. Please log in or sign up again.");
       return;
     }
 
@@ -162,24 +164,10 @@ export function VerifyOtpForm() {
         </svg>
       </div>
 
-      {/* Server & Client Messages */}
-      {serverMessage && (
-        <div
-          role="status"
-          className="mb-4 flex items-start gap-2.5 rounded-xl bg-blue-50 border border-blue-200/80 p-3 text-xs text-blue-900"
-        >
-          <CheckCircle2 className="size-4 shrink-0 text-blue-600 mt-0.5" />
-          <span>{serverMessage}</span>
-        </div>
-      )}
-
-      {(serverError || clientError) && (
-        <div
-          role="alert"
-          className="mb-4 flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200/80 p-3 text-xs text-red-800"
-        >
-          <AlertCircle className="size-4 shrink-0 text-red-600 mt-0.5" />
-          <span>{clientError || serverError}</span>
+      {clientError && (
+        <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200/80 bg-red-50 p-3 text-xs text-red-800">
+          <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-600" />
+          <span>{clientError}</span>
         </div>
       )}
 

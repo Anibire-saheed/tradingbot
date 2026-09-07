@@ -72,7 +72,7 @@ export async function signIn(formData: FormData) {
     ) {
       const resendRes = await supabase.auth.resend({ type: "signup", email });
       if (resendRes.error) {
-        await supabase.auth.signInWithOtp({ email }).catch(() => {});
+        redirect(`/login?error=${encodeURIComponent(`Could not send verification code: ${resendRes.error.message}`)}`);
       }
       redirect(
         `/verify-otp?email=${encodeURIComponent(
@@ -160,7 +160,7 @@ export async function verifyOtp(formData: FormData) {
     );
   }
 
-  redirect("/dashboard");
+  redirect(`/dashboard?message=${encodeURIComponent("Email verified. You are signed in successfully!")}`);
 }
 
 export async function resendOtp(formData: FormData) {
@@ -235,6 +235,9 @@ export async function sendLoginOtp(formData: FormData) {
 
 export async function signOut() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/");
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    redirect(`/dashboard?error=${encodeURIComponent(`Could not sign out: ${error.message}`)}`);
+  }
+  redirect(`/?message=${encodeURIComponent("You have signed out successfully.")}`);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/components/ui/sonner";
 import { type FormEvent } from "react";
 import { ChartNoAxesCombined, Handshake, Mail, ShieldCheck, Wallet, WandSparkles } from "lucide-react";
 
@@ -18,6 +19,7 @@ export function ContactSection({ email }: { email?: string }) {
     const data = new FormData(event.currentTarget);
     const subject = encodeURIComponent(`OmniBot enquiry: ${data.get("role")}`);
     const body = encodeURIComponent(`Name: ${data.get("firstName")} ${data.get("lastName")}\nEmail: ${data.get("email")}\nCountry: ${data.get("country") || "Not specified"}\nRole: ${data.get("role")}\n\n${data.get("message")}`);
+    toast.info("Continue in your email app to send your message.");
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   }
 

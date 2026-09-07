@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
+import { toast } from "@/components/ui/sonner";
 import { Eye, EyeOff } from "lucide-react";
 
 import {
@@ -21,9 +21,6 @@ const initialValues: SignInFormData = {
 type SignInErrors = Partial<Record<keyof SignInFormData, string>>;
 
 export function SignInForm() {
-  const searchParams = useSearchParams();
-  const serverError = searchParams.get("error");
-
   const [values, setValues] = useState<SignInFormData>(initialValues);
   const [errors, setErrors] = useState<SignInErrors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +36,10 @@ export function SignInForm() {
 
     const nextErrors = validateSignInForm(values);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error("Please check the highlighted fields.");
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
@@ -118,14 +118,6 @@ export function SignInForm() {
           Remember me
         </label>
       </div>
-      {serverError && (
-        <p
-          role="alert"
-          className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          {serverError}
-        </p>
-      )}
       <Button
         type="submit"
         disabled={isPending}
