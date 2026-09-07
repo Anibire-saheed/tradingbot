@@ -10,7 +10,7 @@ export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -22,12 +22,31 @@ export async function signUp(formData: FormData) {
     redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
   }
 
-  // When signup succeeds, redirect to /verify-otp for token verification
+  // If Supabase has "Confirm email" OFF, Supabase does not send an email on signUp.
+  // In that case, call signInWithOtp so Supabase/Pingram dispatches the token email:
+  let sendError: string | null = null;
+  if (data?.session) {
+    const otpRes = await supabase.auth.signInWithOtp({ email });
+    if (otpRes.error) {
+      sendError = otpRes.error.message;
+    }
+  }
+
+  if (sendError) {
+    redirect(
+      `/verify-otp?email=${encodeURIComponent(
+        email
+      )}&type=email&error=${encodeURIComponent(
+        `Account created, but email could not be sent: ${sendError}`
+      )}`
+    );
+  }
+
   redirect(
     `/verify-otp?email=${encodeURIComponent(
       email
-    )}&type=signup&message=${encodeURIComponent(
-      "Account created! Please enter the confirmation token sent to your email."
+    )}&type=${data?.session ? "email" : "signup"}&message=${encodeURIComponent(
+      "Account created! Please check your email for the confirmation token."
     )}`
   );
 }
@@ -51,7 +70,10 @@ export async function signIn(formData: FormData) {
       error.message.toLowerCase().includes("email not confirmed") ||
       error.message.toLowerCase().includes("unconfirmed")
     ) {
-      await supabase.auth.resend({ type: "signup", email }).catch(() => {});
+      const resendRes = await supabase.auth.resend({ type: "signup", email });
+      if (resendRes.error) {
+        await supabase.auth.signInWithOtp({ email }).catch(() => {});
+      }
       redirect(
         `/verify-otp?email=${encodeURIComponent(
           email
@@ -64,7 +86,17 @@ export async function signIn(formData: FormData) {
   }
 
   // User credentials are correct: dispatch a login token to email
-  await supabase.auth.signInWithOtp({ email }).catch(() => {});
+  const otpRes = await supabase.auth.signInWithOtp({ email });
+  if (otpRes.error) {
+    console.error("signInWithOtp error:", otpRes.error);
+    redirect(
+      `/verify-otp?email=${encodeURIComponent(
+        email
+      )}&type=email&error=${encodeURIComponent(
+        `Could not send token: ${otpRes.error.message}`
+      )}`
+    );
+  }
 
   // Redirect to /verify-otp page for token confirmation
   redirect(
@@ -142,21 +174,27 @@ export async function resendOtp(formData: FormData) {
     );
   }
 
-  const { error } = await supabase.auth.resend({
-    type: "signup",
-    email,
-  });
+  // Try signInWithOtp first, then fallback to signup resend
+  let { error } = await supabase.auth.signInWithOtp({ email });
 
   if (error) {
-    // If resending signup fails, try sending an OTP signin
-    const retry = await supabase.auth.signInWithOtp({ email });
-    if (retry.error) {
-      redirect(
-        `/verify-otp?email=${encodeURIComponent(
-          email
-        )}&error=${encodeURIComponent(error.message)}`
-      );
+    const signupRes = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    if (!signupRes.error) {
+      error = null;
+    } else {
+      error = signupRes.error;
     }
+  }
+
+  if (error) {
+    redirect(
+      `/verify-otp?email=${encodeURIComponent(
+        email
+      )}&error=${encodeURIComponent(`Failed to send code: ${error.message}`)}`
+    );
   }
 
   redirect(
