@@ -10,7 +10,7 @@ export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -22,19 +22,14 @@ export async function signUp(formData: FormData) {
     redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
   }
 
-  // If email confirmation is enabled, Supabase does not create an active session immediately.
-  // Instead, it sends a token (OTP) to the user's email via Pingram/Supabase SMTP.
-  if (!data.session) {
-    redirect(
-      `/verify-otp?email=${encodeURIComponent(
-        email
-      )}&message=${encodeURIComponent(
-        "Account created! Please check your email for the confirmation token."
-      )}`
-    );
-  }
-
-  redirect("/dashboard");
+  // If signup succeeds, always redirect to /verify-otp for token verification
+  redirect(
+    `/verify-otp?email=${encodeURIComponent(
+      email
+    )}&message=${encodeURIComponent(
+      "Account created! Please enter the confirmation token sent to your email."
+    )}`
+  );
 }
 
 export async function signIn(formData: FormData) {
