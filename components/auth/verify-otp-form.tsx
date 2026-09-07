@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { verifyOtp, resendOtp } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
 
 export function VerifyOtpForm() {
   const searchParams = useSearchParams();
@@ -28,7 +29,6 @@ export function VerifyOtpForm() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Auto-focus the first box on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
@@ -49,7 +49,6 @@ export function VerifyOtpForm() {
     setDigits(next);
     setClientError(null);
 
-    // Automatically focus the next separate box
     if (index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -133,9 +132,9 @@ export function VerifyOtpForm() {
   const isComplete = digits.every((d) => d !== "");
 
   return (
-    <div className="flex flex-col items-center text-center w-full">
-      {/* Blue envelope icon badge */}
-      <div className="mb-5 flex size-12 items-center justify-center rounded-[18px] bg-blue-50 border border-blue-200/70 text-blue-600 shadow-xs">
+    <div className="w-full">
+      {/* Icon badge */}
+      <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 mx-auto">
         <svg
           width="22"
           height="18"
@@ -163,21 +162,11 @@ export function VerifyOtpForm() {
         </svg>
       </div>
 
-      {/* Heading */}
-      <h1 className="font-serif text-[30px] sm:text-[36px] font-bold tracking-tight text-blue-950">
-        Verify your email
-      </h1>
-
-      {/* Subtitle */}
-      <p className="mt-2 text-sm sm:text-base text-blue-700/85 font-medium">
-        Your 6-digit code was sent to you via email
-      </p>
-
       {/* Server & Client Messages */}
       {serverMessage && (
         <div
           role="status"
-          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900 text-left"
+          className="mb-4 flex items-start gap-2.5 rounded-xl bg-blue-50 border border-blue-200/80 p-3 text-xs text-blue-900"
         >
           <CheckCircle2 className="size-4 shrink-0 text-blue-600 mt-0.5" />
           <span>{serverMessage}</span>
@@ -187,22 +176,18 @@ export function VerifyOtpForm() {
       {(serverError || clientError) && (
         <div
           role="alert"
-          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-red-50/95 border border-red-200 p-3 text-xs text-red-800 text-left"
+          className="mb-4 flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200/80 p-3 text-xs text-red-800"
         >
           <AlertCircle className="size-4 shrink-0 text-red-600 mt-0.5" />
           <span>{clientError || serverError}</span>
         </div>
       )}
 
-      {/* Verification Form */}
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="mt-8 flex flex-col items-center w-full"
-      >
-        {/* 6 distinctly separated OTP input boxes in blue theme */}
+      {/* Form */}
+      <form onSubmit={handleSubmit} noValidate className="w-full">
+        {/* 6 separate rounded rectangular OTP boxes */}
         <div
-          className="flex items-center justify-center gap-2 sm:gap-3.5 w-full"
+          className="flex items-center justify-between gap-2 sm:gap-2.5 w-full my-4"
           onPaste={handlePaste}
         >
           {digits.map((digit, index) => {
@@ -211,12 +196,12 @@ export function VerifyOtpForm() {
               <div
                 key={index}
                 onClick={() => inputRefs.current[index]?.focus()}
-                className={`relative flex items-center justify-center w-[46px] h-[60px] sm:w-[56px] sm:h-[72px] rounded-[18px] sm:rounded-[22px] transition-all cursor-text select-none ${
+                className={`relative flex items-center justify-center flex-1 h-[62px] sm:h-[68px] rounded-xl transition-all cursor-text select-none ${
                   isFocused
-                    ? "bg-white border-[2px] border-blue-600 shadow-[0_0_0_4px_rgba(37,99,235,0.18)]"
+                    ? "bg-white border-2 border-blue-600 shadow-[0_0_0_4px_rgba(37,99,235,0.15)]"
                     : digit
-                    ? "bg-blue-50/30 border-[1.5px] border-blue-400 text-blue-950 shadow-xs"
-                    : "bg-blue-50/40 border-[1.5px] border-blue-200/90 text-blue-950 hover:border-blue-300"
+                    ? "bg-blue-50/20 border-1.5 border-blue-400 text-blue-950 shadow-xs"
+                    : "bg-[#f5f6f8] border border-transparent text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <input
@@ -236,25 +221,25 @@ export function VerifyOtpForm() {
                   onFocus={() => setFocusedIndex(index)}
                   onBlur={() => setFocusedIndex(-1)}
                   aria-label={`Digit ${index + 1}`}
-                  className="w-full h-full bg-transparent text-center text-2xl sm:text-3xl font-bold text-blue-950 outline-none caret-blue-600"
+                  className="w-full h-full bg-transparent text-center text-2xl sm:text-3xl font-bold text-slate-900 outline-none caret-blue-600"
                 />
               </div>
             );
           })}
         </div>
 
-        {/* Centered Verify Button in blue */}
-        <button
+        {/* Verify Button styled exactly like login button */}
+        <Button
           type="submit"
           disabled={isPending || !isComplete}
-          className="mt-8 h-12 w-48 sm:w-52 rounded-2xl bg-blue-600 font-semibold text-white shadow-[0_8px_25px_-4px_rgba(37,99,235,0.45)] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+          className="mt-6 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition-all shadow-md shadow-blue-600/20"
         >
           {isPending ? "Verifying…" : "Verify"}
-        </button>
+        </Button>
       </form>
 
-      {/* Footer Text in blue */}
-      <div className="mt-8 text-sm text-blue-900/80">
+      {/* Resend footer */}
+      <div className="mt-5 text-center text-sm text-slate-500">
         Didn’t receive the code?{" "}
         <button
           type="button"
