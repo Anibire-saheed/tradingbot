@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AuthTypewriter } from "@/components/auth/auth-typewriter";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +24,7 @@ export default function SignUpPage() {
               Create your account and explore your next opportunity.
             </p>
           </div>
-          <SignUpForm />
+          <Suspense><SignUpForm /></Suspense>
           <p className="mt-6 text-center text-sm">
             Already have an account?{" "}
             <Link

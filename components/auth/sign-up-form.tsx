@@ -1,14 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import {
   SignUpFormData,
   validateSignUpForm,
 } from "@/components/auth/auth-schemas";
+import { signUp } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -22,15 +23,17 @@ const initialValues: SignUpFormData = {
 type SignUpErrors = Partial<Record<keyof SignUpFormData, string>>;
 
 export function SignUpForm() {
+  const searchParams = useSearchParams();
+  const serverError = searchParams.get("error");
+
   const [values, setValues] = useState<SignUpFormData>(initialValues);
   const [errors, setErrors] = useState<SignUpErrors>({});
-  const [status, setStatus] = useState("");
   const [visiblePasswords, setVisiblePasswords] = useState({ password: false, confirmPassword: false });
+  const [isPending, startTransition] = useTransition();
 
   function updateField(field: keyof SignUpFormData, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
-    setStatus("");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -38,13 +41,12 @@ export function SignUpForm() {
 
     const nextErrors = validateSignUpForm(values);
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
-    if (Object.keys(nextErrors).length > 0) {
-      setStatus("");
-      return;
-    }
-
-    setStatus("Your details are valid. Account creation is not connected yet.");
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      await signUp(formData);
+    });
   }
 
   const fields = [
@@ -64,17 +66,24 @@ export function SignUpForm() {
             <div key={key}>
               <div className={`relative rounded-xl bg-[#f5f6f8] px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#603b58]/25 ${passwordKey ? "pr-14" : ""}`}>
                 <Label htmlFor={key} className="text-xs font-normal text-slate-500">{label}</Label>
-                <Input id={key} name={key} type={passwordKey ? (visible ? "text" : "password") : key === "email" ? "email" : "text"} value={values[key]} onChange={(event) => updateField(key, event.target.value)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-error` : undefined} autoComplete={autoComplete} placeholder={placeholder} className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0" />
-                {passwordKey && <button type="button" onClick={() => setVisiblePasswords((current) => ({ ...current, [passwordKey]: !current[passwordKey] }))} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible} className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-[#603b58]">{visible ? <EyeOff aria-hidden="true" className="size-5" /> : <Eye aria-hidden="true" className="size-5" />}</button>}
+                <Input id={key} name={key} type={passwordKey ? (visible ? "text" : "password") : key === "email" ? "email" : "text"} value={values[key]} onChange={(e) => updateField(key, e.target.value)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-error` : undefined} autoComplete={autoComplete} placeholder={placeholder} className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0" />
+                {passwordKey && (
+                  <button type="button" onClick={() => setVisiblePasswords((current) => ({ ...current, [passwordKey]: !current[passwordKey] }))} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible} className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-[#603b58]">
+                    {visible ? <EyeOff aria-hidden="true" className="size-5" /> : <Eye aria-hidden="true" className="size-5" />}
+                  </button>
+                )}
               </div>
               {errors[key] && <p id={`${key}-error`} className="mt-2 text-sm text-red-600">{errors[key]}</p>}
             </div>
           );
         })}
       </div>
-      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-[#603b58]" />Remember me</label>
-      <Button type="submit" className="mt-5 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700">Sign Up</Button>
-      {status && <p role="status" className="mt-4 text-sm leading-6 text-slate-600">{status}</p>}
+      {serverError && (
+        <p role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{serverError}</p>
+      )}
+      <Button type="submit" disabled={isPending} className="mt-5 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+        {isPending ? "Creating account…" : "Sign Up"}
+      </Button>
     </form>
   );
 }
