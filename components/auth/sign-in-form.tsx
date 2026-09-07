@@ -2,7 +2,6 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 import {
@@ -48,60 +47,92 @@ export function SignInForm() {
     });
   }
 
-  const verifyUrl = values.email
-    ? `/verify-otp?email=${encodeURIComponent(values.email)}`
-    : "/verify-otp";
-
   return (
     <form onSubmit={handleSubmit} noValidate className="w-full">
       <div className="space-y-5">
         <div>
           <div className="rounded-xl bg-[#f5f6f8] px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#603b58]/25">
-            <Label htmlFor="email" className="text-xs font-normal text-slate-500">Email</Label>
-            <Input id="email" name="email" type="email" value={values.email} onChange={(e) => updateField("email", e.target.value)} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "email-error" : undefined} autoComplete="email" placeholder="you@example.com" className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0" />
+            <Label htmlFor="email" className="text-xs font-normal text-slate-500">
+              Email
+            </Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={values.email}
+              onChange={(e) => updateField("email", e.target.value)}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+            />
           </div>
-          {errors.email && <p id="email-error" className="mt-2 text-sm text-red-600">{errors.email}</p>}
+          {errors.email && (
+            <p id="email-error" className="mt-2 text-sm text-red-600">
+              {errors.email}
+            </p>
+          )}
         </div>
         <div>
           <div className="relative rounded-xl bg-[#f5f6f8] px-4 py-2.5 pr-14 focus-within:ring-2 focus-within:ring-[#603b58]/25">
-            <Label htmlFor="password" className="text-xs font-normal text-slate-500">Password</Label>
-            <Input id="password" name="password" type={showPassword ? "text" : "password"} value={values.password} onChange={(e) => updateField("password", e.target.value)} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? "password-error" : undefined} autoComplete="current-password" placeholder="Enter your password" className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0" />
-            <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-[#603b58]">
-              {showPassword ? <EyeOff aria-hidden="true" className="size-5" /> : <Eye aria-hidden="true" className="size-5" />}
+            <Label htmlFor="password" className="text-xs font-normal text-slate-500">
+              Password
+            </Label>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={values.password}
+              onChange={(e) => updateField("password", e.target.value)}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? "password-error" : undefined}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              className="h-7 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-[#603b58]"
+            >
+              {showPassword ? (
+                <EyeOff aria-hidden="true" className="size-5" />
+              ) : (
+                <Eye aria-hidden="true" className="size-5" />
+              )}
             </button>
           </div>
-          {errors.password && <p id="password-error" className="mt-2 text-sm text-red-600">{errors.password}</p>}
+          {errors.password && (
+            <p id="password-error" className="mt-2 text-sm text-red-600">
+              {errors.password}
+            </p>
+          )}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-[#603b58]" />Remember me</label>
-        <Link href={verifyUrl} className="text-xs font-medium text-blue-600 hover:underline">
-          Confirm with token →
-        </Link>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" className="size-4 accent-[#603b58]" />
+          Remember me
+        </label>
       </div>
       {serverError && (
-        <div role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>{serverError}</p>
-          <p className="mt-1 text-xs">
-            Received a confirmation code?{" "}
-            <Link href={verifyUrl} className="font-semibold underline">
-              Confirm with token here
-            </Link>
-          </p>
-        </div>
+        <p
+          role="alert"
+          className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {serverError}
+        </p>
       )}
-      <Button type="submit" disabled={isPending} className="mt-6 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+      <Button
+        type="submit"
+        disabled={isPending}
+        className="mt-6 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+      >
         {isPending ? "Signing in…" : "Login"}
       </Button>
-
-      <div className="mt-4 text-center">
-        <Link
-          href={verifyUrl}
-          className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          Have a confirmation token? <span className="font-medium text-blue-600 underline">Verify & Login</span>
-        </Link>
-      </div>
     </form>
   );
 }
