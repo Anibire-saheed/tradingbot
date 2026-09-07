@@ -22,11 +22,11 @@ export async function signUp(formData: FormData) {
     redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
   }
 
-  // If signup succeeds, always redirect to /verify-otp for token verification
+  // When signup succeeds, redirect to /verify-otp for token verification
   redirect(
     `/verify-otp?email=${encodeURIComponent(
       email
-    )}&message=${encodeURIComponent(
+    )}&type=signup&message=${encodeURIComponent(
       "Account created! Please enter the confirmation token sent to your email."
     )}`
   );
@@ -38,22 +38,42 @@ export async function signIn(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
 
+  if (!email) {
+    redirect(`/login?error=${encodeURIComponent("Please enter your email.")}`);
+  }
+
+  // Verify credentials first
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    if (error.message.toLowerCase().includes("email not confirmed")) {
+    // If email is not confirmed, resend signup confirmation token and redirect to /verify-otp
+    if (
+      error.message.toLowerCase().includes("email not confirmed") ||
+      error.message.toLowerCase().includes("unconfirmed")
+    ) {
+      await supabase.auth.resend({ type: "signup", email }).catch(() => {});
       redirect(
         `/verify-otp?email=${encodeURIComponent(
           email
-        )}&error=${encodeURIComponent(
-          "Your email is not confirmed yet. Please enter the token sent to your email."
+        )}&type=signup&message=${encodeURIComponent(
+          "Your email is not confirmed yet. A verification token was sent to your email."
         )}`
       );
     }
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/dashboard");
+  // User credentials are correct: dispatch a login token to email
+  await supabase.auth.signInWithOtp({ email }).catch(() => {});
+
+  // Redirect to /verify-otp page for token confirmation
+  redirect(
+    `/verify-otp?email=${encodeURIComponent(
+      email
+    )}&type=email&message=${encodeURIComponent(
+      "Verification token sent! Please enter the code sent to your email to complete login."
+    )}`
+  );
 }
 
 export async function verifyOtp(formData: FormData) {
@@ -78,15 +98,25 @@ export async function verifyOtp(formData: FormData) {
     type: type === "email" ? "email" : "signup",
   });
 
-  // If type 'signup' didn't work, attempt 'email' (for OTP sign-ins)
-  if (error && type !== "email") {
+  // If requested type failed, try alternative types
+  if (error) {
+    const fallbackType = type === "email" ? "signup" : "email";
     const retry = await supabase.auth.verifyOtp({
       email,
       token,
-      type: "email",
+      type: fallbackType,
     });
     if (!retry.error) {
       error = null;
+    } else {
+      const retryMagic = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "magiclink",
+      });
+      if (!retryMagic.error) {
+        error = null;
+      }
     }
   }
 
@@ -94,7 +124,7 @@ export async function verifyOtp(formData: FormData) {
     redirect(
       `/verify-otp?email=${encodeURIComponent(
         email
-      )}&error=${encodeURIComponent(error.message)}`
+      )}&type=${encodeURIComponent(type)}&error=${encodeURIComponent(error.message)}`
     );
   }
 
