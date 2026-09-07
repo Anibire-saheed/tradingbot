@@ -10,22 +10,22 @@ export const metadata = {
 
 export default function VerifyOtpPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f9fd] p-4 sm:p-6">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#edf4ff] via-[#f0f6ff] to-[#e6f0fe] p-4 sm:p-6">
       <div className="w-full max-w-[480px]">
         <div className="mb-4">
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
           >
-            <ArrowLeft className="size-3.5" />
+            <ArrowLeft className="size-3.5 text-blue-600" />
             Back to login
           </Link>
         </div>
 
-        <div className="rounded-[32px] sm:rounded-[36px] bg-white p-8 sm:p-12 shadow-[0_20px_50px_-20px_rgba(25,33,61,0.08)] border border-[#eef2f8]">
+        <div className="rounded-[32px] sm:rounded-[36px] bg-white p-8 sm:p-12 shadow-[0_24px_60px_-15px_rgba(37,99,235,0.14)] border border-blue-100/90">
           <Suspense
             fallback={
-              <div className="py-16 text-center text-sm text-slate-400">
+              <div className="py-16 text-center text-sm text-blue-400">
                 Loading verification form…
               </div>
             }

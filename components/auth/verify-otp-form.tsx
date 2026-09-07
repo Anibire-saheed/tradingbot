@@ -43,7 +43,6 @@ export function VerifyOtpForm() {
       return;
     }
 
-    // Take the last entered character if multiple were typed
     const char = cleaned[cleaned.length - 1];
     const next = [...digits];
     next[index] = char;
@@ -136,7 +135,7 @@ export function VerifyOtpForm() {
   return (
     <div className="flex flex-col items-center text-center w-full">
       {/* Blue envelope icon badge */}
-      <div className="mb-5 flex size-12 items-center justify-center rounded-[18px] bg-[#edf2fe] text-[#3b5bf5]">
+      <div className="mb-5 flex size-12 items-center justify-center rounded-[18px] bg-blue-50 border border-blue-200/70 text-blue-600 shadow-xs">
         <svg
           width="22"
           height="18"
@@ -151,12 +150,12 @@ export function VerifyOtpForm() {
             width="20"
             height="16"
             rx="3"
-            stroke="#3B5BF5"
+            stroke="#2563eb"
             strokeWidth="1.8"
           />
           <path
             d="M2 3L11 9.5L20 3"
-            stroke="#3B5BF5"
+            stroke="#2563eb"
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -165,12 +164,12 @@ export function VerifyOtpForm() {
       </div>
 
       {/* Heading */}
-      <h1 className="font-serif text-[30px] sm:text-[36px] font-bold tracking-tight text-[#111827]">
+      <h1 className="font-serif text-[30px] sm:text-[36px] font-bold tracking-tight text-blue-950">
         Verify your email
       </h1>
 
       {/* Subtitle */}
-      <p className="mt-2 text-sm sm:text-base text-[#64748b]">
+      <p className="mt-2 text-sm sm:text-base text-blue-700/85 font-medium">
         Your 6-digit code was sent to you via email
       </p>
 
@@ -178,9 +177,9 @@ export function VerifyOtpForm() {
       {serverMessage && (
         <div
           role="status"
-          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-emerald-50/90 border border-emerald-200/60 p-3 text-xs text-emerald-800 text-left"
+          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900 text-left"
         >
-          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 mt-0.5" />
+          <CheckCircle2 className="size-4 shrink-0 text-blue-600 mt-0.5" />
           <span>{serverMessage}</span>
         </div>
       )}
@@ -188,7 +187,7 @@ export function VerifyOtpForm() {
       {(serverError || clientError) && (
         <div
           role="alert"
-          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-red-50/90 border border-red-200/60 p-3 text-xs text-red-800 text-left"
+          className="mt-4 flex w-full max-w-[380px] items-start gap-2 rounded-xl bg-red-50/95 border border-red-200 p-3 text-xs text-red-800 text-left"
         >
           <AlertCircle className="size-4 shrink-0 text-red-600 mt-0.5" />
           <span>{clientError || serverError}</span>
@@ -201,7 +200,7 @@ export function VerifyOtpForm() {
         noValidate
         className="mt-8 flex flex-col items-center w-full"
       >
-        {/* 6 distinctly separated OTP input boxes */}
+        {/* 6 distinctly separated OTP input boxes in blue theme */}
         <div
           className="flex items-center justify-center gap-2 sm:gap-3.5 w-full"
           onPaste={handlePaste}
@@ -214,10 +213,10 @@ export function VerifyOtpForm() {
                 onClick={() => inputRefs.current[index]?.focus()}
                 className={`relative flex items-center justify-center w-[46px] h-[60px] sm:w-[56px] sm:h-[72px] rounded-[18px] sm:rounded-[22px] transition-all cursor-text select-none ${
                   isFocused
-                    ? "bg-white border-[1.8px] border-[#3b5bf5] shadow-[0_0_0_4px_rgba(59,91,245,0.12)]"
+                    ? "bg-white border-[2px] border-blue-600 shadow-[0_0_0_4px_rgba(37,99,235,0.18)]"
                     : digit
-                    ? "bg-white border-[1.4px] border-slate-300 shadow-sm"
-                    : "bg-[#f8faff] border-[1.2px] border-[#e2e7f4] hover:border-[#cbd5e1]"
+                    ? "bg-blue-50/30 border-[1.5px] border-blue-400 text-blue-950 shadow-xs"
+                    : "bg-blue-50/40 border-[1.5px] border-blue-200/90 text-blue-950 hover:border-blue-300"
                 }`}
               >
                 <input
@@ -237,31 +236,31 @@ export function VerifyOtpForm() {
                   onFocus={() => setFocusedIndex(index)}
                   onBlur={() => setFocusedIndex(-1)}
                   aria-label={`Digit ${index + 1}`}
-                  className="w-full h-full bg-transparent text-center text-2xl sm:text-3xl font-semibold text-[#111827] outline-none caret-[#3b5bf5]"
+                  className="w-full h-full bg-transparent text-center text-2xl sm:text-3xl font-bold text-blue-950 outline-none caret-blue-600"
                 />
               </div>
             );
           })}
         </div>
 
-        {/* Centered Verify Button */}
+        {/* Centered Verify Button in blue */}
         <button
           type="submit"
           disabled={isPending || !isComplete}
-          className="mt-8 h-12 w-48 sm:w-52 rounded-2xl bg-[#3b5bf5] font-semibold text-white shadow-[0_6px_20px_-3px_rgba(59,91,245,0.4)] hover:bg-[#2b4ad6] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+          className="mt-8 h-12 w-48 sm:w-52 rounded-2xl bg-blue-600 font-semibold text-white shadow-[0_8px_25px_-4px_rgba(37,99,235,0.45)] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all active:scale-[0.98]"
         >
           {isPending ? "Verifying…" : "Verify"}
         </button>
       </form>
 
-      {/* Footer Text */}
-      <div className="mt-8 text-sm text-[#64748b]">
+      {/* Footer Text in blue */}
+      <div className="mt-8 text-sm text-blue-900/80">
         Didn’t receive the code?{" "}
         <button
           type="button"
           onClick={handleResend}
           disabled={isResending || isPending}
-          className="font-semibold text-[#3b5bf5] hover:underline disabled:opacity-50 ml-1"
+          className="font-semibold text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50 ml-1"
         >
           {isResending ? "Requesting…" : "Request again"}
         </button>
