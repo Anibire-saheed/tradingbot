@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 import {
@@ -47,6 +48,10 @@ export function SignInForm() {
     });
   }
 
+  const verifyUrl = values.email
+    ? `/verify-otp?email=${encodeURIComponent(values.email)}`
+    : "/verify-otp";
+
   return (
     <form onSubmit={handleSubmit} noValidate className="w-full">
       <div className="space-y-5">
@@ -70,13 +75,33 @@ export function SignInForm() {
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-[#603b58]" />Remember me</label>
+        <Link href={verifyUrl} className="text-xs font-medium text-blue-600 hover:underline">
+          Confirm with token →
+        </Link>
       </div>
       {serverError && (
-        <p role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{serverError}</p>
+        <div role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p>{serverError}</p>
+          <p className="mt-1 text-xs">
+            Received a confirmation code?{" "}
+            <Link href={verifyUrl} className="font-semibold underline">
+              Confirm with token here
+            </Link>
+          </p>
+        </div>
       )}
       <Button type="submit" disabled={isPending} className="mt-6 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
         {isPending ? "Signing in…" : "Login"}
       </Button>
+
+      <div className="mt-4 text-center">
+        <Link
+          href={verifyUrl}
+          className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          Have a confirmation token? <span className="font-medium text-blue-600 underline">Verify & Login</span>
+        </Link>
+      </div>
     </form>
   );
 }

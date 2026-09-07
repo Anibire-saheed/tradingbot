@@ -26,8 +26,20 @@ export const signUpFormSchema = signInFormSchema
     message: "Passwords must match.",
   });
 
+export const verifyOtpFormSchema = z.object({
+  email: z.string().trim().min(1, { message: "Email is required." }).email({
+    message: "Please enter a valid email address.",
+  }),
+  token: z
+    .string()
+    .trim()
+    .min(1, { message: "Verification token is required." })
+    .min(6, { message: "Token must be at least 6 characters." }),
+});
+
 export type SignInFormData = z.infer<typeof signInFormSchema>;
 export type SignUpFormData = z.infer<typeof signUpFormSchema>;
+export type VerifyOtpFormData = z.infer<typeof verifyOtpFormSchema>;
 
 type FieldErrors<T extends Record<string, unknown>> = Partial<
   Record<keyof T, string>
@@ -61,6 +73,16 @@ export function validateSignInForm(data: SignInFormData) {
 
 export function validateSignUpForm(data: SignUpFormData) {
   const result = signUpFormSchema.safeParse(data);
+
+  if (result.success) {
+    return {};
+  }
+
+  return collectErrors(result);
+}
+
+export function validateVerifyOtpForm(data: VerifyOtpFormData) {
+  const result = verifyOtpFormSchema.safeParse(data);
 
   if (result.success) {
     return {};
