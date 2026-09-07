@@ -20,8 +20,6 @@ export function VerifyOtpForm() {
   const serverError = searchParams.get("error");
   const serverMessage = searchParams.get("message");
 
-  const [email, setEmail] = useState(emailParam);
-  const [showEmailInput, setShowEmailInput] = useState(!emailParam);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [clientError, setClientError] = useState<string | null>(null);
@@ -97,9 +95,8 @@ export function VerifyOtpForm() {
     event.preventDefault();
     const token = digits.join("");
 
-    if (!email.trim()) {
-      setShowEmailInput(true);
-      setClientError("Please enter your email address.");
+    if (!emailParam.trim()) {
+      setClientError("Account email not found. Please log in or sign up again.");
       return;
     }
 
@@ -110,7 +107,7 @@ export function VerifyOtpForm() {
 
     setClientError(null);
     const formData = new FormData();
-    formData.append("email", email.trim());
+    formData.append("email", emailParam.trim());
     formData.append("token", token);
     formData.append("type", typeParam);
 
@@ -120,15 +117,14 @@ export function VerifyOtpForm() {
   }
 
   function handleResend() {
-    if (!email.trim()) {
-      setShowEmailInput(true);
-      setClientError("Please enter your email to request the code again.");
+    if (!emailParam.trim()) {
+      setClientError("Account email not found. Please log in or sign up again.");
       return;
     }
 
     setClientError(null);
     const formData = new FormData();
-    formData.append("email", email.trim());
+    formData.append("email", emailParam.trim());
 
     startResendTransition(async () => {
       await resendOtp(formData);
@@ -177,41 +173,6 @@ export function VerifyOtpForm() {
       <p className="mt-2 text-sm sm:text-base text-[#64748b]">
         Your 6-digit code was sent to you via email
       </p>
-
-      {/* Optional Email display / switcher */}
-      {email && !showEmailInput && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#64748b]">
-          <span>
-            Sent to <strong className="font-semibold text-slate-800">{email}</strong>
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowEmailInput(true)}
-            className="text-[#3b5bf5] underline hover:text-[#2b4ad6]"
-          >
-            edit
-          </button>
-        </div>
-      )}
-
-      {showEmailInput && (
-        <div className="mt-4 w-full max-w-[340px] text-left">
-          <label
-            htmlFor="verify-email-input"
-            className="text-xs text-slate-500 font-medium"
-          >
-            Email address
-          </label>
-          <input
-            id="verify-email-input"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-sm text-slate-800 focus:border-[#3b5bf5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3b5bf5]/15"
-          />
-        </div>
-      )}
 
       {/* Server & Client Messages */}
       {serverMessage && (
