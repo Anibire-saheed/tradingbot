@@ -13,7 +13,8 @@ export function InstallPrompt() {
   const dismissed = useRef(false);
   const [event, setEvent] = useState<InstallEvent | null>(null);
   const [showHelp, setShowHelp] = useState(false);
-  const [ios, setIos] = useState(false);
+  const [steps, setSteps] = useState<string[]>([]);
+  const [browserName, setBrowserName] = useState("your browser");
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
@@ -26,10 +27,48 @@ export function InstallPrompt() {
       const isIos =
         /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      if (isIos || /Android/.test(navigator.userAgent)) {
-        setIos(isIos);
-        setShowHelp(true);
-      }
+      const ua = navigator.userAgent;
+      const embedded = /FBAN|FBAV|Instagram|Line\/|; wv\)/i.test(ua);
+      const chrome = /CriOS|Chrome\//.test(ua);
+      const samsung = /SamsungBrowser/.test(ua);
+      const firefox = /Firefox|FxiOS/.test(ua);
+      setBrowserName(
+        embedded
+          ? "in-app browser"
+          : samsung
+            ? "Samsung Internet"
+            : firefox
+              ? "Firefox"
+              : chrome
+                ? "Chrome"
+                : isIos
+                  ? "Safari"
+                  : "your browser",
+      );
+      setSteps(
+        embedded
+          ? [
+              "Open this site in Safari on iPhone, or Chrome on Android, using the app’s menu.",
+              "Then choose Add to Home Screen from the browser’s Share or menu options.",
+            ]
+          : isIos
+            ? [
+                "Tap the browser’s Share button.",
+                "Scroll down and tap Add to Home Screen.",
+                "Leave Open as Web App enabled if shown, then tap Add.",
+              ]
+            : /Android/.test(ua)
+              ? [
+                  "Open your browser’s menu.",
+                  "Choose Install app or Add to Home screen, if available.",
+                  "Confirm to add OmniBot to your home screen.",
+                ]
+              : [
+                  "Open your browser’s menu and look for Install app or an install icon in the address bar.",
+                  "If installation is unavailable, you can keep using OmniBot in this browser.",
+                ],
+      );
+      setShowHelp(true);
     }, 3000);
     function available(event: Event) {
       event.preventDefault();
@@ -81,7 +120,7 @@ export function InstallPrompt() {
   return (
     <aside
       aria-label="Install OmniBot app"
-      className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 rounded-2xl border border-blue-100 bg-white p-5 text-neutral-900 shadow-xl sm:left-auto sm:right-5 sm:w-80"
+      className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-blue-100 bg-white p-5 text-neutral-900 shadow-xl sm:left-auto sm:right-5 sm:w-80"
     >
       <button
         type="button"
@@ -96,13 +135,44 @@ export function InstallPrompt() {
         <Download className="size-6 shrink-0 text-blue-600" />
         <h2 className="font-semibold">Install OmniBot</h2>
       </div>
-      <p className="mt-3 text-sm leading-6 text-neutral-500">
-        {event
-          ? "Keep your workspace one tap away on your home screen."
-          : ios
-            ? "Open your browser’s Share menu and choose Add to Home Screen. If that option is unavailable, open this site in Safari."
-            : "Open Chrome’s ⋮ menu and choose Add to Home screen, then Install if offered. If already installed, open OmniBot from your app launcher."}
-      </p>
+      {event ? (
+        <p className="mt-3 text-sm leading-6 text-neutral-500">
+          Keep your workspace one tap away on your home screen.
+        </p>
+      ) : (
+        <>
+          <p className="mt-3 text-sm font-medium text-neutral-700">
+            Add OmniBot using {browserName}
+          </p>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-neutral-500">
+            {steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          <p className="mt-3 text-xs leading-5 text-neutral-400">
+            No install option? Open the link in Safari on iPhone or Chrome on
+            Android. Browser and device support varies.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  `${window.location.origin}/`,
+                );
+                toast.success("App link copied");
+              } catch {
+                toast.info(
+                  "Copy the website address from your browser’s address bar.",
+                );
+              }
+            }}
+            className="mt-4 min-h-11 w-full rounded-xl bg-blue-50 px-4 text-sm font-semibold text-blue-700"
+          >
+            Copy app link
+          </button>
+        </>
+      )}
       {event && (
         <button
           type="button"
