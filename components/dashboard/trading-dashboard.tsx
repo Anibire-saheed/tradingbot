@@ -1,5 +1,8 @@
 "use client";
 
+import { DepositButton } from "@/components/dashboard/deposit-button";
+
+import { PhantomConnect } from "@/components/wallet/phantom-connect";
 import { TransferMenu } from "@/components/dashboard/transfer-menu";
 import { SupportView } from "@/components/dashboard/support-view";
 import { NewMarkets } from "@/components/dashboard/new-markets";
@@ -18,7 +21,6 @@ import {
 import Link from "next/link";
 import {
   Activity,
-  ArrowDownToLine,
   Bell,
   Bot,
   CalendarDays,
@@ -321,14 +323,7 @@ export function TradingDashboard({
                     Your next opportunity starts with OmniBot.
                   </p>
                 </div>
-                <button
-                  onClick={() =>
-                    toast.info("Wallet connection is not available yet.")
-                  }
-                  className="min-h-11 w-full rounded-xl bg-linear-to-r from-sky-600 to-blue-700 px-4 py-3 text-sm font-medium text-white shadow-sm sm:w-auto"
-                >
-                  Connect wallet
-                </button>
+                <PhantomConnect />
               </div>
 
               <section id="portfolio" className="py-9">
@@ -339,10 +334,7 @@ export function TradingDashboard({
                   <span className="text-neutral-400">$</span>0.00
                 </p>
                 <div className="mt-6 flex gap-3">
-                  <button onClick={unavailable} className={button}>
-                    <ArrowDownToLine className="size-5 text-blue-600" />
-                    Deposit
-                  </button>
+                  <DepositButton className={button} />
                   <WithdrawButton className={button} />
                 </div>
               </section>

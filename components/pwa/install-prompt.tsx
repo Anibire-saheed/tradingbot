@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
@@ -9,9 +9,8 @@ type InstallEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const dismissalKey = "omnibot-install-card-dismissed";
-
 export function InstallPrompt() {
+  const dismissed = useRef(false);
   const [event, setEvent] = useState<InstallEvent | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [ios, setIos] = useState(false);
@@ -23,9 +22,7 @@ export function InstallPrompt() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     const timer = setTimeout(() => {
       if (standalone() || !window.isSecureContext) return;
-      try {
-        if (localStorage.getItem(dismissalKey)) return;
-      } catch {}
+      if (dismissed.current) return;
       const isIos =
         /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -37,12 +34,11 @@ export function InstallPrompt() {
     function available(event: Event) {
       event.preventDefault();
       if (window.matchMedia("(display-mode: standalone)").matches) return;
-      try {
-        if (localStorage.getItem(dismissalKey)) return;
-      } catch {}
+      if (dismissed.current) return;
       setEvent(event as InstallEvent);
     }
     function installed() {
+      dismissed.current = true;
       clearTimeout(timer);
       setShowHelp(false);
       setEvent(null);
@@ -57,9 +53,7 @@ export function InstallPrompt() {
   }, []);
 
   function dismiss() {
-    try {
-      localStorage.setItem(dismissalKey, "true");
-    } catch {}
+    dismissed.current = true;
     setShowHelp(false);
     setEvent(null);
   }

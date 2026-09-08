@@ -1,11 +1,12 @@
 "use client";
 
+import { DepositButton } from "@/components/dashboard/deposit-button";
+
 import { WithdrawButton } from "@/components/dashboard/withdraw-button";
 
 import { useState } from "react";
 import {
   Activity,
-  ArrowDownToLine,
   CalendarDays,
   Coins,
   Eye,
@@ -13,7 +14,6 @@ import {
   SlidersHorizontal,
   Wallet,
 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
 
 const card = "rounded-[22px] border border-neutral-100 bg-white p-6 shadow-sm";
 const action =
@@ -47,13 +47,7 @@ export function PortfolioView() {
       </div>
       <p className="mt-2 text-sm text-neutral-400">Total portfolio value</p>
       <div className="mt-6 flex gap-3">
-        <button
-          className={action}
-          onClick={() => toast.info("Deposits are not connected yet.")}
-        >
-          <ArrowDownToLine className="size-4" />
-          Deposit
-        </button>
+        <DepositButton className={action} />
         <WithdrawButton className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium" />
       </div>
       <div
