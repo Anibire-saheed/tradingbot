@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { sendWelcomeEmail } from "@/lib/send-welcome-email";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signUp(formData: FormData) {
@@ -103,7 +104,7 @@ export async function signIn(formData: FormData) {
     `/verify-otp?email=${encodeURIComponent(
       email
     )}&type=email&message=${encodeURIComponent(
-      "Verification token sent! Please enter the code sent to your email to complete login."
+      "Verification token sent! Please enter the code sent to your email to complete sign-in."
     )}`
   );
 }
@@ -123,11 +124,15 @@ export async function verifyOtp(formData: FormData) {
     );
   }
 
+  // Track the type Supabase actually verifies, including fallback attempts.
+  let verifiedType: "signup" | "email" | "magiclink" =
+    type === "email" ? "email" : "signup";
+
   // Try verifying with the requested type first (signup or email)
-  let { error } = await supabase.auth.verifyOtp({
+  let { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
-    type: type === "email" ? "email" : "signup",
+    type: verifiedType,
   });
 
   // If requested type failed, try alternative types
@@ -139,6 +144,8 @@ export async function verifyOtp(formData: FormData) {
       type: fallbackType,
     });
     if (!retry.error) {
+      data = retry.data;
+      verifiedType = fallbackType;
       error = null;
     } else {
       const retryMagic = await supabase.auth.verifyOtp({
@@ -147,6 +154,8 @@ export async function verifyOtp(formData: FormData) {
         type: "magiclink",
       });
       if (!retryMagic.error) {
+        data = retryMagic.data;
+        verifiedType = "magiclink";
         error = null;
       }
     }
@@ -158,6 +167,15 @@ export async function verifyOtp(formData: FormData) {
         email
       )}&type=${encodeURIComponent(type)}&error=${encodeURIComponent(error.message)}`
     );
+  }
+
+  if (verifiedType === "signup" && data.user?.email && data.user.email_confirmed_at) {
+    try {
+      await sendWelcomeEmail(data.user.email);
+    } catch {
+      // Verification succeeded; an email delivery failure must not block login.
+      console.error("Welcome email delivery failed after OTP verification.");
+    }
   }
 
   redirect(`/dashboard?message=${encodeURIComponent("Email verified. You are signed in successfully!")}`);
@@ -228,7 +246,7 @@ export async function sendLoginOtp(formData: FormData) {
     `/verify-otp?email=${encodeURIComponent(
       email
     )}&type=email&message=${encodeURIComponent(
-      "Login token sent! Please check your email and enter the code."
+      "Sign-in code sent! Please check your email and enter the code."
     )}`
   );
 }

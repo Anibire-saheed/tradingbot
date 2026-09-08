@@ -6,7 +6,8 @@ import { VerifyOtpForm } from "@/components/auth/verify-otp-form";
 
 export const metadata = {
   title: "Verify Email | OmniBot",
-  description: "Enter your 6-digit verification code to confirm your email and log in.",
+  description:
+    "Enter your 6-digit verification code to confirm your email and sign in.",
 };
 
 export default function VerifyOtpPage() {
@@ -33,7 +34,7 @@ export default function VerifyOtpPage() {
               <path d="M19 12H5" />
               <path d="m12 5-7 7 7 7" />
             </svg>
-            Back to login
+            Back to sign in
           </Link>
 
           <div className="mb-6 text-center">

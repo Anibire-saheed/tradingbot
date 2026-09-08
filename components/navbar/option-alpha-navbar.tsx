@@ -56,7 +56,7 @@ export function OptionAlphaNavbar() {
               "h-12 rounded-md px-7 text-base font-semibold shadow-sm",
             )}
           >
-            Login
+            Sign In
           </Link>
           <Link
             href="/sign-up"
@@ -65,7 +65,7 @@ export function OptionAlphaNavbar() {
               "h-12 rounded-md bg-blue-600 px-7 text-base font-semibold text-white hover:bg-blue-700",
             )}
           >
-            Get Started Free
+            Get Started
           </Link>
         </div>
         <Button
@@ -101,7 +101,7 @@ export function OptionAlphaNavbar() {
               )}
               onClick={() => setIsMenuOpen(false)}
             >
-              Login
+              Sign In
             </Link>
             <Link
               href="/sign-up"
@@ -111,7 +111,7 @@ export function OptionAlphaNavbar() {
               )}
               onClick={() => setIsMenuOpen(false)}
             >
-              Get Started Free
+              Get Started
             </Link>
           </div>
         </div>

@@ -52,7 +52,10 @@ export function SignInForm() {
       <div className="space-y-5">
         <div>
           <div className="rounded-xl bg-[#f5f6f8] px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#603b58]/25">
-            <Label htmlFor="email" className="text-xs font-normal text-slate-500">
+            <Label
+              htmlFor="email"
+              className="text-xs font-normal text-slate-500"
+            >
               Email
             </Label>
             <Input
@@ -76,7 +79,10 @@ export function SignInForm() {
         </div>
         <div>
           <div className="relative rounded-xl bg-[#f5f6f8] px-4 py-2.5 pr-14 focus-within:ring-2 focus-within:ring-[#603b58]/25">
-            <Label htmlFor="password" className="text-xs font-normal text-slate-500">
+            <Label
+              htmlFor="password"
+              className="text-xs font-normal text-slate-500"
+            >
               Password
             </Label>
             <Input
@@ -123,7 +129,7 @@ export function SignInForm() {
         disabled={isPending}
         className="mt-6 h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
       >
-        {isPending ? "Signing in…" : "Login"}
+        {isPending ? "Signing in…" : "Sign In"}
       </Button>
     </form>
   );

@@ -1,3 +1,5 @@
+import { CommunityActivity } from "@/components/sections/community-activity";
+import { BotFeaturesSection } from "@/components/sections/bot-features-section";
 import { FaqSection } from "@/components/sections/faq-section";
 import { ContactSection } from "@/components/sections/contact-section";
 import { SiteFooter } from "@/components/sections/site-footer";
@@ -15,11 +17,15 @@ export default function Home() {
       <TradingSimplifiedSection />
       <LicensedServicesSection />
       <HowItWorksSection />
+      <BotFeaturesSection />
       <RewardsSection />
       <PartnersSection />
       <FaqSection />
-      <ContactSection email={process.env.CONTACT_EMAIL || "support@omnidev.co"} />
+      <ContactSection
+        email={process.env.CONTACT_EMAIL || "support@omnidev.co"}
+      />
       <SiteFooter />
+      <CommunityActivity />
     </>
   );
 }

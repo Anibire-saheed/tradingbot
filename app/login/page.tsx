@@ -13,7 +13,21 @@ export default function LoginPage() {
             href="/"
             className="mb-4 inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 12H5" />
+              <path d="m12 5-7 7 7 7" />
+            </svg>
             Back to home
           </Link>
           <div className="mb-6 text-center">
@@ -21,10 +35,12 @@ export default function LoginPage() {
               Sign In
             </h1>
             <p className="mt-3 text-[15px] md:text-base text-neutral-600">
-              Log in to explore your next trading opportunity.
+              Sign in to explore your next trading opportunity.
             </p>
           </div>
-          <Suspense><SignInForm /></Suspense>
+          <Suspense>
+            <SignInForm />
+          </Suspense>
           <p className="mt-6 text-center text-sm">
             Don’t have an account?{" "}
             <Link

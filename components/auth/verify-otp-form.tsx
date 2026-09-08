@@ -74,7 +74,10 @@ export function VerifyOtpForm() {
 
   function handlePaste(e: ClipboardEvent<HTMLDivElement>) {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
     if (!pasted) return;
 
     const next = [...digits];
@@ -93,8 +96,10 @@ export function VerifyOtpForm() {
     const token = digits.join("");
 
     if (!emailParam.trim()) {
-      setClientError("Account email not found. Please log in or sign up again.");
-      toast.error("Account email not found. Please log in or sign up again.");
+      setClientError(
+        "Account email not found. Please sign in or sign up again.",
+      );
+      toast.error("Account email not found. Please sign in or sign up again.");
       return;
     }
 
@@ -117,8 +122,10 @@ export function VerifyOtpForm() {
 
   function handleResend() {
     if (!emailParam.trim()) {
-      setClientError("Account email not found. Please log in or sign up again.");
-      toast.error("Account email not found. Please log in or sign up again.");
+      setClientError(
+        "Account email not found. Please sign in or sign up again.",
+      );
+      toast.error("Account email not found. Please sign in or sign up again.");
       return;
     }
 
@@ -165,7 +172,10 @@ export function VerifyOtpForm() {
       </div>
 
       {clientError && (
-        <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200/80 bg-red-50 p-3 text-xs text-red-800">
+        <div
+          role="alert"
+          className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200/80 bg-red-50 p-3 text-xs text-red-800"
+        >
           <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-600" />
           <span>{clientError}</span>
         </div>
@@ -188,8 +198,8 @@ export function VerifyOtpForm() {
                   isFocused
                     ? "bg-white border-2 border-blue-600 shadow-[0_0_0_4px_rgba(37,99,235,0.15)]"
                     : digit
-                    ? "bg-blue-50/20 border-1.5 border-blue-400 text-blue-950 shadow-xs"
-                    : "bg-[#f5f6f8] border border-transparent text-slate-900 hover:border-slate-300"
+                      ? "bg-blue-50/20 border-1.5 border-blue-400 text-blue-950 shadow-xs"
+                      : "bg-[#f5f6f8] border border-transparent text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <input
