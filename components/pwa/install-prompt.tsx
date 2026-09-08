@@ -13,9 +13,27 @@ const dismissalKey = "omnibot-install-card-dismissed";
 
 export function InstallPrompt() {
   const [event, setEvent] = useState<InstallEvent | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [ios, setIos] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
+    const standalone = () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const timer = setTimeout(() => {
+      if (standalone() || !window.isSecureContext) return;
+      try {
+        if (localStorage.getItem(dismissalKey)) return;
+      } catch {}
+      const isIos =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (isIos || /Android/.test(navigator.userAgent)) {
+        setIos(isIos);
+        setShowHelp(true);
+      }
+    }, 3000);
     function available(event: Event) {
       event.preventDefault();
       if (window.matchMedia("(display-mode: standalone)").matches) return;
@@ -25,11 +43,14 @@ export function InstallPrompt() {
       setEvent(event as InstallEvent);
     }
     function installed() {
+      clearTimeout(timer);
+      setShowHelp(false);
       setEvent(null);
     }
     window.addEventListener("beforeinstallprompt", available);
     window.addEventListener("appinstalled", installed);
     return () => {
+      clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", available);
       window.removeEventListener("appinstalled", installed);
     };
@@ -39,6 +60,7 @@ export function InstallPrompt() {
     try {
       localStorage.setItem(dismissalKey, "true");
     } catch {}
+    setShowHelp(false);
     setEvent(null);
   }
 
@@ -49,7 +71,10 @@ export function InstallPrompt() {
       await event.prompt();
       const result = await event.userChoice;
       if (result.outcome === "dismissed") dismiss();
-      else setEvent(null);
+      else {
+        setEvent(null);
+        setShowHelp(false);
+      }
     } catch {
       setEvent(null);
       toast.info("Use your browser’s menu to install OmniBot.");
@@ -58,7 +83,7 @@ export function InstallPrompt() {
     }
   }
 
-  if (!event) return null;
+  if (!event && !showHelp) return null;
   return (
     <aside
       aria-label="Install OmniBot app"
@@ -78,16 +103,22 @@ export function InstallPrompt() {
         <h2 className="font-semibold">Install OmniBot</h2>
       </div>
       <p className="mt-3 text-sm leading-6 text-neutral-500">
-        Keep your workspace one tap away on your home screen.
+        {event
+          ? "Keep your workspace one tap away on your home screen."
+          : ios
+            ? "Open your browser’s Share menu and choose Add to Home Screen. If that option is unavailable, open this site in Safari."
+            : "Open Chrome’s ⋮ menu and choose Add to Home screen, then Install if offered. If already installed, open OmniBot from your app launcher."}
       </p>
-      <button
-        type="button"
-        onClick={install}
-        disabled={installing}
-        className="mt-4 min-h-11 w-full rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-      >
-        {installing ? "Opening installer…" : "Install app"}
-      </button>
+      {event && (
+        <button
+          type="button"
+          onClick={install}
+          disabled={installing}
+          className="mt-4 min-h-11 w-full rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+        >
+          {installing ? "Opening installer…" : "Install app"}
+        </button>
+      )}
     </aside>
   );
 }
