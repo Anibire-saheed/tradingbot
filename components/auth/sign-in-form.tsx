@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
+import Link from "next/link";
 import { toast } from "@/components/ui/sonner";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -127,6 +128,9 @@ export function SignInForm() {
           />
           Remember me
         </label>
+        <Link href="/forgot-password" className="font-medium text-[#603b58] hover:underline">
+          Forgot password?
+        </Link>
       </div>
       <Button
         type="submit"

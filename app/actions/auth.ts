@@ -8,13 +8,18 @@ import {
 import { redirect } from "next/navigation";
 import { sendWelcomeEmail } from "@/lib/send-welcome-email";
 import { createClient } from "@/lib/supabase/server";
+import { passwordSchema } from "@/lib/password-schema";
 
 export async function signUp(formData: FormData) {
+  const parsedPassword = passwordSchema.safeParse(formData.get("password"));
+  if (!parsedPassword.success) {
+    redirect(`/sign-up?error=${encodeURIComponent(parsedPassword.error.issues[0].message)}`);
+  }
   const supabase = await createClient();
 
   const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim();
-  const password = formData.get("password") as string;
+  const password = parsedPassword.data;
 
   const { data, error } = await supabase.auth.signUp({
     email,

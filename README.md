@@ -2,6 +2,23 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Password reset
+
+The sign-in page links to `/forgot-password`. Supabase sends a recovery email
+using `resetPasswordForEmail`; `/auth/callback` exchanges the PKCE code and opens
+`/reset-password`, where the authenticated user can set a new password.
+
+In Supabase **Authentication → URL Configuration**, set your production Site URL
+and add `https://YOUR_DOMAIN/auth/callback?next=/reset-password` to Redirect URLs
+(plus the localhost equivalent for development). Keep the reset email template's
+`{{ .ConfirmationURL }}` link. Optional `NEXT_PUBLIC_SITE_URL` pins the destination
+origin; otherwise the reset action uses the requesting page's origin. Open the
+email in the browser that requested it, since PKCE verification uses its cookie.
+
+Run `node --test tests/password-reset.test.mjs` to check validation and actions.
+Email delivery must be verified against your configured Supabase project.
+See [Supabase password reset documentation](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail).
+
 ### Bot storage
 
 Run `supabase/migrations/20260910000000_create_bots.sql` in your Supabase

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { passwordSchema } from "@/lib/password-schema";
 
 export const signInFormSchema = z.object({
   email: z.string().trim().min(1, { message: "Email is required." }).email({
@@ -12,6 +13,7 @@ export const signInFormSchema = z.object({
 
 export const signUpFormSchema = signInFormSchema
   .extend({
+    password: passwordSchema,
     name: z
       .string()
       .trim()
