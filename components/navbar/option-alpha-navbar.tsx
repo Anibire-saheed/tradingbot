@@ -19,12 +19,12 @@ function OptionAlphaLogo() {
   return (
     <div className="flex items-center gap-3">
       <Image
-        src="/omnilog.png"
-        alt="Option Alpha"
-        width={220}
-        height={56}
-        priority
-        className="h-25 w-auto"
+        src="/icons/omnibotlogo.png"
+        alt="OmniBot"
+        width={2168}
+        height={725}
+        preload
+        className="h-auto w-36 object-contain sm:w-44"
       />
     </div>
   );

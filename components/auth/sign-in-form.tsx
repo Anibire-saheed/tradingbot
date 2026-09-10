@@ -120,7 +120,11 @@ export function SignInForm() {
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="size-4 accent-[#603b58]" />
+          <input
+            name="rememberMe"
+            type="checkbox"
+            className="size-4 accent-[#603b58]"
+          />
           Remember me
         </label>
       </div>

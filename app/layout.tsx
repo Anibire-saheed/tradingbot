@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { ActivityNotifications } from "@/components/ui/activity-notifications";
-import { InstallPrompt } from "@/components/pwa/install-prompt";
-import { PwaManager } from "@/components/pwa/pwa-manager";
+import { RetireServiceWorker } from "@/components/pwa/retire-service-worker";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
@@ -26,8 +25,6 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "OmniBot",
   applicationName: "OmniBot",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "OmniBot", statusBarStyle: "default" },
   icons: { apple: "/icons/icon-180.png", icon: "/favicon.ico" },
   description: "Build, test, and automate your trading plan.",
 };
@@ -47,8 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />
-        <PwaManager />
-        <InstallPrompt />
+        <RetireServiceWorker />
         <Suspense fallback={null}>
           <ActivityNotifications />
         </Suspense>

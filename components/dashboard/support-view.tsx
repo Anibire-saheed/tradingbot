@@ -14,7 +14,7 @@ export function SupportView() {
         <CircleHelp className="mb-5 size-10 text-blue-500" />
         <h2 className="text-xl font-semibold">Find your way around OmniBot</h2>
         <p className="mt-3 text-sm leading-7 text-neutral-500">
-          Learn about your portfolio, explore markets, and get started with demo
+          Learn about your portfolio, explore markets, and get started with
           bots.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -41,7 +41,7 @@ export function SupportView() {
           ],
           [
             "Are bot drafts saved?",
-            "Demo bot drafts last until you leave or refresh the page. They do not place trades.",
+            "Bot drafts last until you leave or refresh the page. They do not place trades.",
           ],
           [
             "Where do market prices come from?",

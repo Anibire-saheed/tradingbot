@@ -1,5 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
+import {
+  REMEMBER_COOKIE,
+  REMEMBER_SECONDS,
+} from "@/lib/supabase/session-options";
 import { redirect } from "next/navigation";
 import { sendWelcomeEmail } from "@/lib/send-welcome-email";
 import { createClient } from "@/lib/supabase/server";
@@ -36,23 +41,32 @@ export async function signUp(formData: FormData) {
   if (sendError) {
     redirect(
       `/verify-otp?email=${encodeURIComponent(
-        email
+        email,
       )}&type=email&error=${encodeURIComponent(
-        `Account created, but email could not be sent: ${sendError}`
-      )}`
+        `Account created, but email could not be sent: ${sendError}`,
+      )}`,
     );
   }
 
   redirect(
     `/verify-otp?email=${encodeURIComponent(
-      email
+      email,
     )}&type=${data?.session ? "email" : "signup"}&message=${encodeURIComponent(
-      "Account created! Please check your email for the confirmation token."
-    )}`
+      "Account created! Please check your email for the confirmation token.",
+    )}`,
   );
 }
 
 export async function signIn(formData: FormData) {
+  const cookieStore = await cookies();
+  const remembered = formData.get("rememberMe") === "on";
+  cookieStore.set(REMEMBER_COOKIE, remembered ? "true" : "false", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    ...(remembered ? { maxAge: REMEMBER_SECONDS } : {}),
+  });
   const supabase = await createClient();
 
   const email = (formData.get("email") as string)?.trim();
@@ -73,14 +87,16 @@ export async function signIn(formData: FormData) {
     ) {
       const resendRes = await supabase.auth.resend({ type: "signup", email });
       if (resendRes.error) {
-        redirect(`/login?error=${encodeURIComponent(`Could not send verification code: ${resendRes.error.message}`)}`);
+        redirect(
+          `/login?error=${encodeURIComponent(`Could not send verification code: ${resendRes.error.message}`)}`,
+        );
       }
       redirect(
         `/verify-otp?email=${encodeURIComponent(
-          email
+          email,
         )}&type=signup&message=${encodeURIComponent(
-          "Your email is not confirmed yet. A verification token was sent to your email."
-        )}`
+          "Your email is not confirmed yet. A verification token was sent to your email.",
+        )}`,
       );
     }
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
@@ -92,20 +108,20 @@ export async function signIn(formData: FormData) {
     console.error("signInWithOtp error:", otpRes.error);
     redirect(
       `/verify-otp?email=${encodeURIComponent(
-        email
+        email,
       )}&type=email&error=${encodeURIComponent(
-        `Could not send token: ${otpRes.error.message}`
-      )}`
+        `Could not send token: ${otpRes.error.message}`,
+      )}`,
     );
   }
 
   // Redirect to /verify-otp page for token confirmation
   redirect(
     `/verify-otp?email=${encodeURIComponent(
-      email
+      email,
     )}&type=email&message=${encodeURIComponent(
-      "Verification token sent! Please enter the code sent to your email to complete sign-in."
-    )}`
+      "Verification token sent! Please enter the code sent to your email to complete sign-in.",
+    )}`,
   );
 }
 
@@ -119,8 +135,8 @@ export async function verifyOtp(formData: FormData) {
   if (!email || !token) {
     redirect(
       `/verify-otp?email=${encodeURIComponent(
-        email || ""
-      )}&error=${encodeURIComponent("Please provide both email and token.")}`
+        email || "",
+      )}&error=${encodeURIComponent("Please provide both email and token.")}`,
     );
   }
 
@@ -164,12 +180,16 @@ export async function verifyOtp(formData: FormData) {
   if (error) {
     redirect(
       `/verify-otp?email=${encodeURIComponent(
-        email
-      )}&type=${encodeURIComponent(type)}&error=${encodeURIComponent(error.message)}`
+        email,
+      )}&type=${encodeURIComponent(type)}&error=${encodeURIComponent(error.message)}`,
     );
   }
 
-  if (verifiedType === "signup" && data.user?.email && data.user.email_confirmed_at) {
+  if (
+    verifiedType === "signup" &&
+    data.user?.email &&
+    data.user.email_confirmed_at
+  ) {
     try {
       await sendWelcomeEmail(data.user.email);
     } catch {
@@ -178,7 +198,9 @@ export async function verifyOtp(formData: FormData) {
     }
   }
 
-  redirect(`/dashboard?message=${encodeURIComponent("Email verified. You are signed in successfully!")}`);
+  redirect(
+    `/dashboard?message=${encodeURIComponent("Account verified. You are signed in successfully!")}`,
+  );
 }
 
 export async function resendOtp(formData: FormData) {
@@ -188,7 +210,7 @@ export async function resendOtp(formData: FormData) {
 
   if (!email) {
     redirect(
-      `/verify-otp?error=${encodeURIComponent("Please provide an email address.")}`
+      `/verify-otp?error=${encodeURIComponent("Please provide an email address.")}`,
     );
   }
 
@@ -210,15 +232,15 @@ export async function resendOtp(formData: FormData) {
   if (error) {
     redirect(
       `/verify-otp?email=${encodeURIComponent(
-        email
-      )}&error=${encodeURIComponent(`Failed to send code: ${error.message}`)}`
+        email,
+      )}&error=${encodeURIComponent(`Failed to send code: ${error.message}`)}`,
     );
   }
 
   redirect(
     `/verify-otp?email=${encodeURIComponent(
-      email
-    )}&message=${encodeURIComponent("A new verification token has been sent to your email.")}`
+      email,
+    )}&message=${encodeURIComponent("A new verification token has been sent to your email.")}`,
   );
 }
 
@@ -244,10 +266,10 @@ export async function sendLoginOtp(formData: FormData) {
 
   redirect(
     `/verify-otp?email=${encodeURIComponent(
-      email
+      email,
     )}&type=email&message=${encodeURIComponent(
-      "Sign-in code sent! Please check your email and enter the code."
-    )}`
+      "Sign-in code sent! Please check your email and enter the code.",
+    )}`,
   );
 }
 
@@ -255,7 +277,12 @@ export async function signOut() {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
-    redirect(`/dashboard?error=${encodeURIComponent(`Could not sign out: ${error.message}`)}`);
+    redirect(
+      `/dashboard?error=${encodeURIComponent(`Could not sign out: ${error.message}`)}`,
+    );
   }
-  redirect(`/?message=${encodeURIComponent("You have signed out successfully.")}`);
+  (await cookies()).delete(REMEMBER_COOKIE);
+  redirect(
+    `/?message=${encodeURIComponent("You have signed out successfully.")}`,
+  );
 }

@@ -1,51 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { getPhantom, syncWallet, usePhantomAddress } from "@/lib/wallet/phantom";
+import { CheckCircle2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
-type PublicKey = { toString(): string };
-type Provider = {
-  isPhantom?: boolean;
-  publicKey?: PublicKey | null;
-  isConnected?: boolean;
-  connect(): Promise<{ publicKey: PublicKey }>;
-  disconnect(): Promise<void>;
-  on(event: string, callback: (key?: PublicKey | null) => void): void;
-  removeListener(
-    event: string,
-    callback: (key?: PublicKey | null) => void,
-  ): void;
-};
-function provider() {
-  const value = (window as Window & { phantom?: { solana?: Provider } }).phantom
-    ?.solana;
-  return value?.isPhantom ? value : undefined;
-}
-
 export function PhantomConnect() {
-  const [address, setAddress] = useState("");
+  const address = usePhantomAddress();
   const [busy, setBusy] = useState(false);
-  const bound = useRef<Provider | null>(null);
-  const cleanup = useRef<(() => void) | null>(null);
-  function bind(wallet: Provider) {
-    if (bound.current === wallet) return;
-    cleanup.current?.();
-    const changed = (key?: PublicKey | null) =>
-      setAddress(key?.toString() ?? "");
-    const disconnected = () => setAddress("");
-    wallet.on("accountChanged", changed);
-    wallet.on("disconnect", disconnected);
-    bound.current = wallet;
-    cleanup.current = () => {
-      wallet.removeListener("accountChanged", changed);
-      wallet.removeListener("disconnect", disconnected);
-    };
-  }
-  useEffect(() => () => cleanup.current?.(), []);
 
   async function connect() {
     if (busy) return;
-    const wallet = provider();
+    const wallet = getPhantom();
     if (!wallet) {
       const mobile =
         /Android|iPhone|iPad|iPod/.test(navigator.userAgent) ||
@@ -81,9 +47,8 @@ export function PhantomConnect() {
     }
     setBusy(true);
     try {
-      bind(wallet);
       const result = await wallet.connect();
-      setAddress(result.publicKey.toString());
+      syncWallet(result.publicKey.toString());
       toast.success("Phantom wallet connected");
     } catch (error) {
       const code =
@@ -99,33 +64,12 @@ export function PhantomConnect() {
       setBusy(false);
     }
   }
-  async function disconnect() {
-    setBusy(true);
-    try {
-      await bound.current?.disconnect();
-      setAddress("");
-      toast.success("Wallet disconnected");
-    } catch {
-      toast.error("Could not disconnect. Try again in Phantom.");
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <div className="w-full sm:w-auto">
       {address ? (
-        <div className="rounded-xl bg-white/80 p-3 text-sm">
-          <p className="font-medium text-blue-900" title={address}>
-            Phantom · {address.slice(0, 4)}…{address.slice(-4)}
-          </p>
-          <button
-            type="button"
-            onClick={disconnect}
-            disabled={busy}
-            className="mt-1 min-h-9 text-xs text-neutral-600 underline"
-          >
-            {busy ? "Disconnecting…" : "Disconnect"}
-          </button>
+        <div className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800" title={address}>
+          <CheckCircle2 className="size-4 shrink-0 text-blue-600" />
+          <span>Phantom connected</span><span className="text-xs text-blue-600">{address.slice(0, 4)}…{address.slice(-4)}</span>
         </div>
       ) : (
         <button

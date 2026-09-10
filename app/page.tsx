@@ -1,4 +1,3 @@
-import { CommunityActivity } from "@/components/sections/community-activity";
 import { BotFeaturesSection } from "@/components/sections/bot-features-section";
 import { FaqSection } from "@/components/sections/faq-section";
 import { ContactSection } from "@/components/sections/contact-section";
@@ -25,7 +24,6 @@ export default function Home() {
         email={process.env.CONTACT_EMAIL || "support@omnidev.co"}
       />
       <SiteFooter />
-      <CommunityActivity />
     </>
   );
 }

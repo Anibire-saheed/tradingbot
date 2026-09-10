@@ -19,6 +19,7 @@ import {
   ActivityView,
 } from "@/components/dashboard/dashboard-views";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Activity,
   Bell,
@@ -136,8 +137,17 @@ export function TradingDashboard({
           aria-label="OmniBot home"
           className="mb-7 flex h-11 items-center gap-2 px-2 font-bold tracking-tight text-blue-600"
         >
-          <Bot className="size-8 shrink-0" />
-          {!collapsed && "OmniBot"}
+          {collapsed ? (
+            <Bot className="size-8 shrink-0" />
+          ) : (
+            <Image
+              src="/icons/omnibotlogo.png"
+              alt="OmniBot"
+              width={2168}
+              height={725}
+              className="h-auto w-full object-contain"
+            />
+          )}
         </Link>
         <nav aria-label="Dashboard navigation" className="space-y-1">
           {[

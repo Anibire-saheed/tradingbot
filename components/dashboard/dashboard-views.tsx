@@ -5,6 +5,9 @@ import { DepositButton } from "@/components/dashboard/deposit-button";
 import { WithdrawButton } from "@/components/dashboard/withdraw-button";
 
 import { useState } from "react";
+import { useWalletBalances } from "@/lib/wallet/use-wallet-balances";
+import { balanceTotal } from "@/lib/wallet/balances";
+import { PhantomConnect } from "@/components/wallet/phantom-connect";
 import {
   Activity,
   CalendarDays,
@@ -22,6 +25,14 @@ const action =
 export function PortfolioView() {
   const [period, setPeriod] = useState("1M");
   const [hidden, setHidden] = useState(false);
+  const { address, data, error, loading, refresh } = useWalletBalances();
+  const assets = data?.assets ?? [];
+  const money = (value: number | null | undefined) => hidden ? "••••" : value == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  const totals = [
+    ["Cryptocurrencies", data ? balanceTotal(assets.filter((asset) => !asset.stablecoin)) : null],
+    ["Trading bots", 0],
+    ["Cash & stablecoins", data ? balanceTotal(assets.filter((asset) => asset.stablecoin)) : null],
+  ] as const;
   return (
     <section aria-labelledby="portfolio-title">
       <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-500">
@@ -35,7 +46,7 @@ export function PortfolioView() {
       </h1>
       <div className="mt-7 flex items-center gap-3">
         <p className="text-5xl font-semibold tracking-tight">
-          {hidden ? "••••" : "$0.00"}
+          {money(data ? balanceTotal(assets) : null)}
         </p>
         <button
           onClick={() => setHidden(!hidden)}
@@ -45,7 +56,7 @@ export function PortfolioView() {
           {hidden ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
         </button>
       </div>
-      <p className="mt-2 text-sm text-neutral-400">Total portfolio value</p>
+      <p className="mt-2 text-sm text-neutral-400">Connected wallet value · Solana</p>
       <div className="mt-6 flex gap-3">
         <DepositButton className={action} />
         <WithdrawButton className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium" />
@@ -76,28 +87,57 @@ export function PortfolioView() {
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        {["Cryptocurrencies", "Trading bots", "Cash & stablecoins"].map(
-          (title, index) => (
+        {totals.map(
+          ([title, value]) => (
             <div key={title} className={card}>
               <div
-                className={`mb-8 grid size-9 place-items-center rounded-xl ${index === 1 ? "bg-blue-50 text-blue-500" : "bg-blue-50 text-blue-500"}`}
+                className="mb-8 grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-500"
               >
                 <Coins className="size-5" />
               </div>
               <p className="text-xs text-neutral-500">{title}</p>
-              <p className="mt-1 font-semibold">{hidden ? "••••" : "$0.00"}</p>
+              <p className="mt-1 font-semibold">{money(value)}</p>
             </div>
           ),
         )}
       </div>
-      <h2 className="mb-4 mt-9 text-xl font-semibold">Your balances</h2>
-      <div className={`${card} text-center`}>
-        <Wallet className="mx-auto mb-3 size-8 text-blue-300" />
-        <p className="font-medium">A fresh start for your portfolio</p>
-        <p className="mt-2 text-sm text-neutral-500">
-          Your assets will appear here once your account is funded.
-        </p>
+      <p className="mt-3 text-xs text-neutral-500">Draft bots do not hold funds. Stablecoins include USDC and USDT.</p>
+      <div className="mb-4 mt-9 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold">Your balances</h2>
+        {address && <button onClick={refresh} disabled={loading} className="min-h-10 text-sm font-medium text-blue-600 disabled:opacity-50">{loading ? "Refreshing…" : "Refresh balances"}</button>}
       </div>
+      {error && <p role="alert" className="mb-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">{error}{data ? " Showing the last successful balance update." : ""}</p>}
+      {!address ? (
+        <div className={`${card} text-center`}>
+          <Wallet className="mx-auto mb-3 size-8 text-blue-300" />
+          <p className="font-medium">Connect your wallet to see your balances</p>
+          <p className="mt-2 text-sm text-neutral-500">Deposits to your connected Phantom wallet appear here after network confirmation.</p>
+          <div className="mt-5 flex justify-center"><PhantomConnect /></div>
+        </div>
+      ) : !data ? (
+        <div className={card} role="status">{loading ? "Loading wallet balances…" : "Wallet balances are unavailable. Try refreshing."}</div>
+      ) : (
+        <div className={card}>
+          <p className="mb-4 break-all text-xs text-neutral-500">Phantom · {address}</p>
+          <div className="divide-y divide-neutral-100">
+            {assets.map((asset) => (
+              <div key={asset.mint} className="flex flex-wrap items-center justify-between gap-3 py-4">
+                <div>
+                  <p className="font-medium">{asset.symbol}</p>
+                  {asset.mint !== "native" && <a href={`https://explorer.solana.com/address/${asset.mint}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600" title={asset.mint}>{asset.mint.slice(0, 6)}…{asset.mint.slice(-6)}</a>}
+                </div>
+                <div className="min-w-0 text-right">
+                  <p className="break-all font-medium">{hidden ? "••••" : asset.amount} {asset.symbol}</p>
+                  <p className="mt-1 text-sm text-neutral-500">{money(asset.usdValue)}{!hidden && asset.usdValue === null ? " · Price unavailable" : ""}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-neutral-500">Updated {new Date(data.updatedAt).toLocaleTimeString()} · Refreshes every 30 seconds</p>
+          {assets.some((asset) => asset.usdValue === null) && <p className="mt-2 text-xs text-neutral-500">Some prices are unavailable. Dollar totals are shown only when all included assets have a price.</p>}
+          {assets.every((asset) => Number(asset.amount) === 0) && <p className="mt-3 text-sm text-neutral-500">No funds yet. Deposits will appear after network confirmation.</p>}
+        </div>
+      )}
     </section>
   );
 }

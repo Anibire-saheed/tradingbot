@@ -1,4 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import {
+  REMEMBER_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/supabase/session-options";
 import { cookies } from "next/headers";
 
 export async function createClient() {
@@ -15,7 +19,14 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(
+                name,
+                value,
+                sessionCookieOptions(
+                  options,
+                  cookieStore.get(REMEMBER_COOKIE)?.value === "true",
+                ),
+              ),
             );
           } catch {
             // setAll called from a Server Component — cookies will be set
@@ -23,6 +34,6 @@ export async function createClient() {
           }
         },
       },
-    }
+    },
   );
 }

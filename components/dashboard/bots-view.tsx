@@ -1,51 +1,87 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Bot, Plus, ShieldCheck, Trash2 } from "lucide-react";
-import { z } from "zod";
+import { botSchema, type SavedBot } from "@/lib/bots";
+import { createSavedBot, deleteSavedBot, listSavedBots } from "@/app/actions/bots";
 import { toast } from "@/components/ui/sonner";
 
-const schema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Enter a bot name with at least 2 characters.")
-    .max(60),
-  strategy: z.enum(["Trend following", "Dollar-cost averaging", "Buy the dip"]),
-  asset: z.enum(["BTC", "ETH", "SOL"]),
-  budget: z.coerce
-    .number()
-    .min(10, "Allocation must be at least $10.")
-    .max(1000000),
-  stopLoss: z.coerce
-    .number()
-    .min(1, "Stop loss must be between 1% and 50%.")
-    .max(50, "Stop loss must be between 1% and 50%."),
-});
-type DraftBot = z.infer<typeof schema> & { id: string };
 const field =
   "mt-2 min-h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-300";
 
 export function BotsView() {
-  const [bots, setBots] = useState<DraftBot[]>([]);
+  const [bots, setBots] = useState<SavedBot[]>([]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
-  function createBot(event: FormEvent<HTMLFormElement>) {
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBots() {
+      try {
+        const result = await listSavedBots();
+        if (cancelled) return;
+        if (result.error) setLoadError(result.error);
+        else setBots(result.bots ?? []);
+      } catch {
+        if (!cancelled) setLoadError("Could not load your bots. Please try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadBots();
+    return () => { cancelled = true; };
+  }, [loadAttempt]);
+
+  async function createBot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = schema.safeParse(
+    if (saving) return;
+    const result = botSchema.safeParse(
       Object.fromEntries(new FormData(event.currentTarget)),
     );
     if (!result.success) {
       setError(result.error.issues[0].message);
       return;
     }
-    setBots((current) => [
-      ...current,
-      { ...result.data, id: crypto.randomUUID() },
-    ]);
-    setCreating(false);
+    setSaving(true);
     setError("");
-    toast.success("Bot created. No trades will be placed.");
+    try {
+      const saved = await createSavedBot(result.data);
+      if (saved.error || !saved.bot) {
+        setError(saved.error ?? "Could not save your bot. Please try again.");
+        return;
+      }
+      const bot = saved.bot;
+      setBots((current) => [...current, bot]);
+      setCreating(false);
+      toast.success("Bot saved to your account. No trades will be placed.");
+    } catch {
+      setError("Could not save your bot. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeBot(id: string) {
+    if (deleting) return;
+    setDeleting(id);
+    try {
+      const result = await deleteSavedBot(id);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      setBots((current) => current.filter((bot) => bot.id !== id));
+      toast.success("Bot deleted from your account.");
+    } catch {
+      toast.error("Could not delete your bot. Please try again.");
+    } finally {
+      setDeleting(null);
+    }
   }
   return (
     <section aria-labelledby="bots-title">
@@ -63,6 +99,7 @@ export function BotsView() {
         </div>
         <button
           onClick={() => setCreating(!creating)}
+          disabled={loading || Boolean(loadError) || saving}
           aria-expanded={creating}
           className="inline-flex min-h-11 items-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white hover:bg-blue-700"
         >
@@ -74,8 +111,8 @@ export function BotsView() {
         <ShieldCheck className="mt-1 size-5 shrink-0" />
         <p>
           Build a strategy and review its settings. Trading is not connected, so
-          these bots do not scan markets or place orders. Drafts last until you
-          leave or refresh this page.
+          these bots do not scan markets or place orders. Bots are saved to your
+          account and stay there until deleted.
         </p>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -164,12 +201,14 @@ export function BotsView() {
           <div className="mt-6 flex gap-3">
             <button
               type="submit"
+              disabled={saving}
               className="min-h-11 rounded-xl bg-blue-600 px-5 text-sm font-medium text-white"
             >
-              Create bot
+              {saving ? "Saving…" : "Create bot"}
             </button>
             <button
               type="button"
+              disabled={saving}
               onClick={() => {
                 setCreating(false);
                 setError("");
@@ -182,7 +221,18 @@ export function BotsView() {
         </form>
       )}
       <h2 className="mb-4 mt-8 text-xl font-semibold">Your bots</h2>
-      {bots.length === 0 ? (
+      {loading ? (
+        <p role="status" className="rounded-3xl bg-white p-6 text-neutral-500">Loading your bots…</p>
+      ) : loadError ? (
+        <div role="alert" className="rounded-3xl bg-white p-6">
+          <p className="text-red-600">{loadError}</p>
+          <button className="mt-3 text-blue-600" onClick={() => {
+            setLoadError("");
+            setLoading(true);
+            setLoadAttempt((attempt) => attempt + 1);
+          }}>Try again</button>
+        </div>
+      ) : bots.length === 0 ? (
         <div className="rounded-3xl bg-white px-6 py-14 text-center">
           <Bot className="mx-auto mb-5 size-14 text-blue-300" />
           <h3 className="text-lg font-semibold">
@@ -212,10 +262,9 @@ export function BotsView() {
                 </span>
                 <button
                   aria-label={`Delete ${bot.name}`}
-                  onClick={() => {
-                    setBots(bots.filter((item) => item.id !== bot.id));
-                    toast.success("Bot removed.");
-                  }}
+                  onClick={() => removeBot(bot.id)}
+                  disabled={deleting !== null}
+                  aria-busy={deleting === bot.id}
                   className="grid size-10 place-items-center text-neutral-400 hover:text-red-500"
                 >
                   <Trash2 className="size-4" />

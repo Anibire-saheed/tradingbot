@@ -37,7 +37,7 @@ export function SiteFooter() {
         <div className="grid gap-12 pb-10 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
           <div>
             <Link href="/" aria-label="OmniBot home" className="inline-block rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
-              <Image src="/omnilog.png" alt="OmniBot" width={220} height={56} className="h-14 w-auto max-w-full object-contain" />
+              <Image src="/icons/omnibotlogo.png" alt="OmniBot" width={2168} height={725} className="h-auto w-36 max-w-full object-contain sm:w-44" />
             </Link>
             <p className="mt-5 max-w-md text-sm leading-7 sm:text-base">
               Explore crypto opportunities with trading insights and portfolio tools — helping you make sense of the market and take your next step.
