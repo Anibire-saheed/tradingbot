@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getPhantom, syncWallet, usePhantomAddress } from "@/lib/wallet/phantom";
+import { connectMobileWallet } from "@/lib/wallet/phantom-mobile";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
@@ -17,16 +18,11 @@ export function PhantomConnect() {
         /Android|iPhone|iPad|iPod/.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       if (mobile) {
-        if (window.location.pathname === "/connect-wallet") {
-          toast.info(
-            "Open this page inside Phantom’s browser, then tap Connect wallet.",
-          );
-          return;
+        try {
+          connectMobileWallet();
+        } catch {
+          toast.error("Could not start Phantom. Allow browser storage and try again.");
         }
-        const target = `${window.location.origin}/connect-wallet`;
-        window.location.assign(
-          `https://phantom.app/ul/browse/${encodeURIComponent(target)}?ref=${encodeURIComponent(window.location.origin)}`,
-        );
       } else {
         toast.info(
           "Install the Phantom browser extension, then reload this page.",

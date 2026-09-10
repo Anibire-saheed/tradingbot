@@ -1,8 +1,27 @@
 "use server";
 
+import bs58 from "bs58";
+
 import { Connection, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+
+export async function broadcastSignedTransfer(encoded: string): Promise<{ signature?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Sign in before submitting a withdrawal." };
+  if (!z.string().min(1).max(2000).safeParse(encoded).success) return { error: "Invalid signed transaction." };
+  try {
+    const bytes = bs58.decode(encoded);
+    const transaction = VersionedTransaction.deserialize(bytes);
+    if (transaction.signatures.some((signature) => signature.every((byte) => byte === 0))) return { error: "Phantom did not sign the transaction." };
+    const connection = new Connection(process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com", { commitment: "confirmed", disableRetryOnRateLimit: true });
+    const signature = await connection.sendRawTransaction(bytes, { skipPreflight: false, maxRetries: 2 });
+    return { signature };
+  } catch {
+    return { error: "Could not confirm transaction submission. Check your Phantom activity before trying again." };
+  }
+}
 
 const input = z.object({ from: z.string(), to: z.string(), amount: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d{1,9})?$/, "Use up to 9 decimal places.") });
 export async function prepareWalletTransfer(values: { from: string; to: string; amount: string }) {

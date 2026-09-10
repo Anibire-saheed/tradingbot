@@ -5,6 +5,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { ArrowUpFromLine, X } from "lucide-react";
 import { getPhantom, usePhantomAddress } from "@/lib/wallet/phantom";
 import { PhantomConnect } from "@/components/wallet/phantom-connect";
+import { mobileWalletAddress, signMobileTransfer } from "@/lib/wallet/phantom-mobile";
 import { prepareWalletTransfer } from "@/app/actions/wallet";
 
 const field = "mt-2 min-h-12 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm focus:ring-2 focus:ring-blue-300";
@@ -28,12 +29,16 @@ export function WithdrawButton({ className }: { className?: string }) {
   async function send() {
     if (!review || busy) return;
     const wallet = getPhantom();
-    if (!wallet || wallet.publicKey?.toString() !== review.from || address !== review.from) { setReview(null);setError("Wallet account changed. Review your withdrawal again.");return; }
+    if ((wallet ? wallet.publicKey?.toString() : mobileWalletAddress()) !== review.from || address !== review.from) { setReview(null);setError("Wallet account changed. Review your withdrawal again.");return; }
     setBusy(true);setError("");
     try {
       const prepared = await prepareWalletTransfer(review);
       if (prepared.error || !prepared.transaction) { setError(prepared.error || "Could not prepare transaction.");return; }
       if (prepared.fee !== review.fee) { setReview({ ...review, fee: prepared.fee! });setError("Network fee changed. Review the updated fee before continuing.");return; }
+      if (!wallet) {
+        signMobileTransfer(prepared.transaction, review.from);
+        return;
+      }
       if (wallet.publicKey?.toString() !== review.from) throw new Error("Account changed");
       const { VersionedTransaction } = await import("@solana/web3.js");
       const transaction = VersionedTransaction.deserialize(Uint8Array.from(atob(prepared.transaction), (char) => char.charCodeAt(0)));
