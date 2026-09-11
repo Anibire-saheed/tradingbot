@@ -44,7 +44,6 @@ function validatePrivateKey(value: string) {
   if (!trimmed) {
     return "Private key is required.";
   }
-  return "";
 }
 
 export function ImportWalletView({
