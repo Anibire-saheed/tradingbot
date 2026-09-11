@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 import { usePhantomAddress } from "@/lib/wallet/phantom";
@@ -37,21 +37,63 @@ export const wallets = [
 
 export type Wallet = (typeof wallets)[number];
 
+const STORAGE_KEY = "connected_wallet_info";
+
+// 1. Module-level variables to cache the snapshot reference
+let cachedRawValue: string | null = null;
+let cachedWallet: Wallet | null = null;
+
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+// 2. Return cached reference if the raw localStorage string hasn't changed
+function getClientSnapshot(): Wallet | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved === cachedRawValue) {
+      return cachedWallet;
+    }
+
+    cachedRawValue = saved;
+    cachedWallet = saved ? JSON.parse(saved) : null;
+    return cachedWallet;
+  } catch {
+    cachedRawValue = null;
+    cachedWallet = null;
+    return null;
+  }
+}
+
+function getServerSnapshot(): Wallet | null {
+  return null;
+}
+
 export function PhantomConnect() {
   const address = usePhantomAddress();
 
-  const [busy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+
+  const storedWallet = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const firstWallet = useRef<HTMLButtonElement>(null);
 
+  const isConnected = Boolean(address || storedWallet);
+
   useEffect(() => {
     const modal = dialog.current;
 
-    if (!open || address || !modal) {
+    if (!open || isConnected || !modal) {
       return;
     }
 
@@ -74,7 +116,7 @@ export function PhantomConnect() {
       document.body.style.overflow = previousOverflow;
       triggerButton?.focus();
     };
-  }, [open, address]);
+  }, [open, isConnected]);
 
   function openWalletPicker() {
     setSelectedWallet(null);
@@ -86,18 +128,33 @@ export function PhantomConnect() {
     setOpen(false);
   }
 
+  function handleConnectSuccess(wallet: Wallet) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
+    window.dispatchEvent(new Event("storage"));
+    setBusy(false);
+    closeWalletPicker();
+  }
+
+  function handleDisconnect() {
+    localStorage.removeItem(STORAGE_KEY);
+    window.dispatchEvent(new Event("storage"));
+  }
+
   return (
     <div className="w-full sm:w-auto">
-      {address ? (
+      {isConnected ? (
         <div
-          className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800"
-          title={address}
+          onClick={handleDisconnect}
+          className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-800 transition hover:bg-blue-100"
+          title="Click to disconnect"
         >
           <CheckCircle2 className="size-4 shrink-0 text-blue-600" />
-          <span>Phantom connected</span>
-          <span className="text-xs text-blue-600">
-            {address.slice(0, 4)}…{address.slice(-4)}
-          </span>
+          <span>{storedWallet?.name ?? "Phantom"} Connected</span>
+          {address && (
+            <span className="text-xs text-blue-600">
+              {address.slice(0, 4)}…{address.slice(-4)}
+            </span>
+          )}
         </div>
       ) : (
         <button
@@ -114,7 +171,7 @@ export function PhantomConnect() {
         </button>
       )}
 
-      {open && !address && (
+      {open && !isConnected && (
         <dialog
           ref={dialog}
           id="wallet-picker"
@@ -137,13 +194,16 @@ export function PhantomConnect() {
                 wallet={selectedWallet}
                 onBack={() => setSelectedWallet(null)}
                 onClose={closeWalletPicker}
+                onSuccess={() => handleConnectSuccess(selectedWallet)}
               />
             ) : (
               <WalletListView
                 busy={busy}
                 firstWallet={firstWallet}
                 onClose={closeWalletPicker}
-                onSelect={setSelectedWallet}
+                onSelect={(wallet) => {
+                  setSelectedWallet(wallet);
+                }}
               />
             )}
           </div>
