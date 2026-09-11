@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { mobileWalletAddress } from "@/lib/wallet/phantom-mobile";
 import type { VersionedTransaction } from "@solana/web3.js";
 
 type Key = { toString(): string };
@@ -29,7 +30,12 @@ export function syncWallet(value: string) {
 }
 function bind() {
   const wallet = getPhantom();
-  if (!wallet || wallet === bound) return;
+  if (!wallet) {
+    const mobileAddress = mobileWalletAddress();
+    if (address !== mobileAddress) syncWallet(mobileAddress);
+    return;
+  }
+  if (wallet === bound) return;
   cleanup?.();
   bound = wallet;
   const changed = (key?: Key | null) => syncWallet(key?.toString() ?? "");

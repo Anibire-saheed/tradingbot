@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const requestedNext = searchParams.get("next");
+  const next = requestedNext === "/reset-password" ? "/reset-password" : "/dashboard";
 
   if (code) {
     const supabase = await createClient();
@@ -15,6 +16,6 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent("Invalid or expired confirmation link.")}`
+    `${origin}${next === "/reset-password" ? "/forgot-password" : "/login"}?error=${encodeURIComponent("Invalid or expired confirmation link.")}`
   );
 }
