@@ -4,6 +4,7 @@ import { RetireServiceWorker } from "@/components/pwa/retire-service-worker";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { WalletProvider } from "@/lib/wallet/wallet-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,12 +43,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster />
-        <RetireServiceWorker />
-        <Suspense fallback={null}>
-          <ActivityNotifications />
-        </Suspense>
+        <WalletProvider>
+          {children}
+          <Toaster />
+          <RetireServiceWorker />
+          <Suspense fallback={null}>
+            <ActivityNotifications />
+          </Suspense>
+        </WalletProvider>
       </body>
     </html>
   );

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 import { usePhantomAddress } from "@/lib/wallet/phantom";
+import { useWallet, WalletData } from "@/lib/wallet/wallet-context";
+import { formatAddress } from "@/lib/store";
 import { WalletListView } from "./WalletListView";
 import { ImportWalletView } from "./ImportWalletView";
 
@@ -35,67 +37,27 @@ export const wallets = [
   },
 ] as const;
 
-export type Wallet = (typeof wallets)[number];
-
-const STORAGE_KEY = "connected_wallet_info";
-
-// 1. Module-level variables to cache the snapshot reference
-let cachedRawValue: string | null = null;
-let cachedWallet: Wallet | null = null;
-
-function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-// 2. Return cached reference if the raw localStorage string hasn't changed
-function getClientSnapshot(): Wallet | null {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (saved === cachedRawValue) {
-      return cachedWallet;
-    }
-
-    cachedRawValue = saved;
-    cachedWallet = saved ? JSON.parse(saved) : null;
-    return cachedWallet;
-  } catch {
-    cachedRawValue = null;
-    cachedWallet = null;
-    return null;
-  }
-}
-
-function getServerSnapshot(): Wallet | null {
-  return null;
-}
+export type Wallet = (typeof wallets)[number] & { address?: string };
 
 export function PhantomConnect() {
   const address = usePhantomAddress();
+  const { wallet: storedWallet, connectWallet, disconnectWallet } = useWallet();
 
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
-
-  const storedWallet = useSyncExternalStore(
-    subscribe,
-    getClientSnapshot,
-    getServerSnapshot,
-  );
 
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const firstWallet = useRef<HTMLButtonElement>(null);
 
   const isConnected = Boolean(address || storedWallet);
+  const displayAddress = formatAddress(address || storedWallet?.address);
 
   useEffect(() => {
     const modal = dialog.current;
 
-    if (!open || isConnected || !modal) {
-      return;
-    }
+    if (!open || isConnected || !modal) return;
 
     const triggerButton = trigger.current;
 
@@ -112,7 +74,6 @@ export function PhantomConnect() {
       if (modal.open) {
         modal.close();
       }
-
       document.body.style.overflow = previousOverflow;
       triggerButton?.focus();
     };
@@ -128,16 +89,14 @@ export function PhantomConnect() {
     setOpen(false);
   }
 
-  function handleConnectSuccess(wallet: Wallet) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
-    window.dispatchEvent(new Event("storage"));
+  function handleConnectSuccess(walletData: WalletData) {
+    connectWallet(walletData);
     setBusy(false);
     closeWalletPicker();
   }
 
   function handleDisconnect() {
-    localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new Event("storage"));
+    disconnectWallet();
   }
 
   return (
@@ -149,10 +108,10 @@ export function PhantomConnect() {
           title="Click to disconnect"
         >
           <CheckCircle2 className="size-4 shrink-0 text-blue-600" />
-          <span>{storedWallet?.name ?? "Phantom"} Connected</span>
-          {address && (
-            <span className="text-xs text-blue-600">
-              {address.slice(0, 4)}…{address.slice(-4)}
+          <span>{storedWallet?.name ?? "Wallet"} Connected</span>
+          {displayAddress && (
+            <span className="rounded-md bg-blue-100/80 px-2 py-0.5 font-mono text-xs font-semibold text-blue-900">
+              {displayAddress}
             </span>
           )}
         </div>
@@ -194,7 +153,9 @@ export function PhantomConnect() {
                 wallet={selectedWallet}
                 onBack={() => setSelectedWallet(null)}
                 onClose={closeWalletPicker}
-                onSuccess={() => handleConnectSuccess(selectedWallet)}
+                onSuccess={(connectedData?: Wallet) =>
+                  handleConnectSuccess(connectedData || selectedWallet)
+                }
               />
             ) : (
               <WalletListView

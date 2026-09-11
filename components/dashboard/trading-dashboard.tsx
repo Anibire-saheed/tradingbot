@@ -1,25 +1,9 @@
 "use client";
 
-import { DepositButton } from "@/components/dashboard/deposit-button";
-
-import { PhantomConnect } from "@/components/wallet/phantom-connect";
-import { TransferMenu } from "@/components/dashboard/transfer-menu";
-import { SupportView } from "@/components/dashboard/support-view";
-import { NewMarkets } from "@/components/dashboard/new-markets";
-import { LiveMarkets } from "@/components/dashboard/live-markets";
-import { WithdrawButton } from "@/components/dashboard/withdraw-button";
-
-import { GettingStartedView } from "@/components/dashboard/getting-started-view";
-import { BotsView } from "@/components/dashboard/bots-view";
 import { useState } from "react";
-import { ProfileMenu } from "@/components/dashboard/profile-menu";
-import { useRouter } from "next/navigation";
-import {
-  PortfolioView,
-  ActivityView,
-} from "@/components/dashboard/dashboard-views";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   Bell,
@@ -36,7 +20,26 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+
+import { DepositButton } from "@/components/dashboard/deposit-button";
+import { PhantomConnect } from "@/components/wallet/phantom-connect";
+import { TransferMenu } from "@/components/dashboard/transfer-menu";
+import { SupportView } from "@/components/dashboard/support-view";
+import { NewMarkets } from "@/components/dashboard/new-markets";
+import { LiveMarkets } from "@/components/dashboard/live-markets";
+import { WithdrawButton } from "@/components/dashboard/withdraw-button";
+import { GettingStartedView } from "@/components/dashboard/getting-started-view";
+import { BotsView } from "@/components/dashboard/bots-view";
+import { ProfileMenu } from "@/components/dashboard/profile-menu";
+import {
+  PortfolioView,
+  ActivityView,
+} from "@/components/dashboard/dashboard-views";
 import { toast } from "@/components/ui/sonner";
+import { usePhantomAddress } from "@/lib/wallet/phantom";
+import { useWallet } from "@/lib/wallet/wallet-context";
+import { formatAddress, useIsMounted } from "@/lib/store";
+import { useSolanaBalance } from "@/lib/solana/useSolanaBalance";
 
 const assets = [
   {
@@ -58,8 +61,10 @@ const assets = [
     color: "bg-neutral-900",
   },
 ];
+
 const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-sm transition hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
+
 const unavailable = () =>
   toast.info("Funding and trading are not available yet.", {
     description:
@@ -95,6 +100,17 @@ export function TradingDashboard({
   const [amount, setAmount] = useState("");
   const [repeat, setRepeat] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
+
+  const isMounted = useIsMounted();
+  const phantomAddress = usePhantomAddress();
+  const { wallet: storedWallet } = useWallet();
+
+  const activeAddress = phantomAddress || storedWallet?.address;
+  const displayAddress = formatAddress(activeAddress);
+
+  // Fetch real-time account balance from Solana blockchain
+  const { balance, loading } = useSolanaBalance(activeAddress);
+
   const selected = assets.find((item) => item.symbol === asset)!;
   const cards = [
     {
@@ -130,7 +146,9 @@ export function TradingDashboard({
         />
       )}
       <aside
-        className={`fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] bg-white p-4 transition-all ${collapsed ? "w-20" : "w-48"} ${mobileOpen ? "flex" : "hidden lg:flex"}`}
+        className={`fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] bg-white p-4 transition-all ${
+          collapsed ? "w-20" : "w-48"
+        } ${mobileOpen ? "flex" : "hidden lg:flex"}`}
       >
         <Link
           href="/dashboard"
@@ -171,7 +189,12 @@ export function TradingDashboard({
                     ? "page"
                     : undefined
                 }
-                className={`flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium hover:bg-blue-50 ${label === view || (label === "Trading bots" && view === "Bots") ? "bg-blue-50 text-blue-600" : "text-neutral-700"}`}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium hover:bg-blue-50 ${
+                  label === view ||
+                  (label === "Trading bots" && view === "Bots")
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-neutral-700"
+                }`}
               >
                 <NavIcon className="size-5 shrink-0" />
                 {!collapsed && String(label)}
@@ -338,11 +361,48 @@ export function TradingDashboard({
 
               <section id="portfolio" className="py-9">
                 <p className="text-sm underline decoration-dotted underline-offset-4">
-                  Portfolio value
+                  Portfolio balance
                 </p>
+
+                {/* Live Solana Account Balance */}
                 <p className="mt-2 text-5xl font-semibold tracking-tight">
-                  <span className="text-neutral-400">$</span>0.00
+                  {loading ? (
+                    <span className="animate-pulse text-neutral-400">
+                      Loading...
+                    </span>
+                  ) : balance !== null ? (
+                    <>
+                      {balance.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 4,
+                      })}{" "}
+                      <span className="text-neutral-400 text-3xl font-normal">
+                        SOL
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      0.00{" "}
+                      <span className="text-neutral-400 text-3xl font-normal">
+                        SOL
+                      </span>
+                    </>
+                  )}
                 </p>
+
+                {/* Connected Wallet Indicator */}
+                {isMounted && activeAddress && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="inline-block size-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <p className="font-mono text-xs font-medium text-neutral-500">
+                      Connected:{" "}
+                      <span className="font-semibold text-neutral-800">
+                        {displayAddress}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
                 <div className="mt-6 flex gap-3">
                   <DepositButton className={button} />
                   <WithdrawButton className={button} />
@@ -431,7 +491,7 @@ export function TradingDashboard({
             <section
               hidden={view !== "Home"}
               id="activity"
-              className="mt-6 rounded-[22px] bg-white p-5"
+              className="mt-6 rounded-[22px] bg-[#ffffff] p-5"
             >
               <h2 className="font-semibold">Recent activity</h2>
               <p className="py-7 text-center text-sm text-neutral-400">
@@ -450,7 +510,11 @@ export function TradingDashboard({
                   key={option}
                   aria-pressed={tab === option}
                   onClick={() => setTab(option)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-medium ${tab === option ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-medium ${
+                    tab === option
+                      ? "bg-white text-neutral-900 shadow-sm"
+                      : "text-neutral-500"
+                  }`}
                 >
                   {option}
                 </button>
@@ -515,10 +579,14 @@ export function TradingDashboard({
                   aria-checked={repeat}
                   aria-label="Repeat trade weekly"
                   onClick={() => setRepeat(!repeat)}
-                  className={`h-5 w-9 rounded-full p-0.5 ${repeat ? "bg-blue-600" : "bg-neutral-300"}`}
+                  className={`h-5 w-9 rounded-full p-0.5 ${
+                    repeat ? "bg-blue-600" : "bg-neutral-300"
+                  }`}
                 >
                   <span
-                    className={`block size-4 rounded-full bg-white transition-transform ${repeat ? "translate-x-4" : ""}`}
+                    className={`block size-4 rounded-full bg-white transition-transform ${
+                      repeat ? "translate-x-4" : ""
+                    }`}
                   />
                 </button>
                 {repeat && <span className="text-xs">Weekly</span>}
