@@ -44,11 +44,6 @@ function validatePrivateKey(value: string) {
   if (!trimmed) {
     return "Private key is required.";
   }
-
-  if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
-    return "Private key must be a 64-character hex string.";
-  }
-
   return "";
 }
 
