@@ -38,7 +38,7 @@ function validateRecoveryPhrase(value: string) {
   return "";
 }
 
-function validatePrivateKey(value: string) {
+function validatePrivateKey(value: string): string {
   const trimmed = value.trim().replace(/^0x/i, "");
 
   if (!trimmed) {
